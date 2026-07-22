@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     let allSales = [];
-    let currentFilter = 'all';
+    let currentFilter = 'active';
 
     const tableBody = document.getElementById('table-body');
     const emptyState = document.getElementById('empty-state');
@@ -70,7 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = '';
         
         let filteredSales = allSales;
-        if (currentFilter === 'expiring_today') {
+        if (currentFilter === 'active') {
+            filteredSales = allSales.filter(s => s.uiStatus !== 'revoked');
+        } else if (currentFilter === 'expiring_today') {
             filteredSales = allSales.filter(s => s.uiStatus === 'warning');
         } else if (currentFilter === 'expired') {
             filteredSales = allSales.filter(s => s.uiStatus === 'danger');
@@ -89,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tr = document.createElement('tr');
                 
                 let statusBadge = '';
-                if (sale.uiStatus === 'revoked') statusBadge = '<span class="status-badge status-revoked">Já Revogada</span>';
+                if (sale.uiStatus === 'revoked') statusBadge = '<span class="status-badge status-revoked">Acesso Retirado</span>';
                 else if (sale.uiStatus === 'danger') statusBadge = '<span class="status-badge status-danger">Expirada</span>';
                 else if (sale.uiStatus === 'warning') statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
                 else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
