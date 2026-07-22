@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ggsel/Digiseller AutoManage</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <h1>DigiManager</h1>
+            </div>
+            <div class="stats">
+                <div class="stat-box active-box">
+                    <span class="stat-label">Contas Ativas</span>
+                    <span class="stat-value" id="count-active">0</span>
+                </div>
+                <div class="stat-box warning-box">
+                    <span class="stat-label">Expirando Hoje</span>
+                    <span class="stat-value" id="count-warning">0</span>
+                </div>
+                <div class="stat-box danger-box">
+                    <span class="stat-label">Expiradas (Ação Requerida)</span>
+                    <span class="stat-value" id="count-danger">0</span>
+                </div>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="controls">
+                <div class="tabs">
+                    <button class="tab active" data-filter="all">Todas as Contas</button>
+                    <button class="tab" data-filter="expiring_today">Expirando Hoje</button>
+                    <button class="tab" data-filter="expired">Expiradas (Não Revogadas)</button>
+                    <button class="tab" data-filter="revoked">Já Revogadas</button>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-refresh" id="refresh-btn">⟳ Atualizar</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="sales-table">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Produto</th>
+                            <th>Email do Cliente</th>
+                            <th>Data Venda</th>
+                            <th>Expira Em</th>
+                            <th>Status Expiração</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Carregado via JS -->
+                    </tbody>
+                </table>
+                <div id="empty-state" class="empty-state hidden">
+                    <div class="empty-icon">📂</div>
+                    <h3>Nenhum registro encontrado</h3>
+                    <p>Assim que houver novas vendas, elas aparecerão aqui automaticamente.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Account Details -->
+    <div class="modal-overlay hidden" id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Detalhes da Conta</h2>
+            <div class="modal-body" id="modal-details">
+                <!-- details -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-close" id="modal-close">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
