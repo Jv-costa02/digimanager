@@ -105,6 +105,15 @@ def clear_all():
     conn.close()
     return jsonify({"status": "success", "message": "All data cleared"})
 
+@app.route('/api/clear-all', methods=['DELETE'])
+def clear_all():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM sales')
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "message": "All data cleared"})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
