@@ -390,136 +390,107 @@ def import_digiseller():
     
     return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors})
 
-@app.route('/api/import/ggmax-email', methods=['POST'])
-def import_ggmax_email():
-    email_user = os.environ.get('EMAIL_USER')
-    email_pass = os.environ.get('EMAIL_PASS')
+@app.route('/api/import/ggmax-discord-sync', methods=['POST'])
+def import_ggmax_discord_sync():
+    discord_token = os.environ.get('DISCORD_BOT_TOKEN')
+    channel_id = os.environ.get('DISCORD_CHANNEL_ID')
     
-    if not email_user or not email_pass:
-        return jsonify({"error": "Configuração de e-mail (EMAIL_USER / EMAIL_PASS) ausente no servidor."}), 400
+    if not discord_token or not channel_id:
+        return jsonify({"error": "Faltam as variáveis DISCORD_BOT_TOKEN ou DISCORD_CHANNEL_ID no Railway."}), 400
         
     imported = 0
     skipped = 0
     errors = []
+    debug_info = []
     
     try:
-        # Conectar ao Gmail
-        mail = imaplib.IMAP4_SSL("imap.gmail.com")
-        mail.login(email_user, email_pass)
-        mail.select("inbox")
+        url = f"https://discord.com/api/v10/channels/{channel_id}/messages?limit=100"
+        headers = {
+            "Authorization": f"Bot {discord_token}"
+        }
         
-        # Buscar emails da GGMax (vamos buscar os mais recentes)
-        # Buscar na caixa de entrada por remetente ou assunto
-        status, messages = mail.search(None, '(FROM "ggmax")')
+        resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            return jsonify({"error": f"Erro do Discord: {resp.status_code} - {resp.text[:100]}"}), 400
+            
+        messages = resp.json()
+        if not isinstance(messages, list):
+            return jsonify({"error": "Resposta inválida do Discord"}), 500
+            
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if status != 'OK' or not messages[0]:
-            # Se não achou 'FROM ggmax', tenta buscar de forma geral os últimos 50 emails
-            status, messages = mail.search(None, 'ALL')
+        # Invertemos para processar as mais antigas primeiro
+        for msg in reversed(messages):
+            # A mensagem do Webhook tem o conteudo nas 'embeds'
+            embeds = msg.get('embeds', [])
+            content = msg.get('content', '')
             
-        if status == 'OK' and messages[0]:
-            email_ids = messages[0].split()
-            # Pegar os últimos 50 emails para não processar coisas muito velhas
-            email_ids = email_ids[-50:]
-            
-            conn = get_db()
-            cursor = conn.cursor()
-            
-            for e_id in reversed(email_ids):
-                try:
-                    res, msg_data = mail.fetch(e_id, '(RFC822)')
-                    if res != 'OK':
-                        continue
-                        
-                    for response_part in msg_data:
-                        if isinstance(response_part, tuple):
-                            msg = email.message_from_bytes(response_part[1])
-                            
-                            # Pegar Assunto
-                            subject, encoding = decode_header(msg["Subject"])[0]
-                            if isinstance(subject, bytes):
-                                subject = subject.decode(encoding if encoding else "utf-8", errors='ignore')
-                            
-                            # Verificar se é da GGMax
-                            sender = msg.get("From", "")
-                            if "ggmax" not in sender.lower() and "ggmax" not in subject.lower():
-                                continue
-                                
-                            # Pegar o corpo do email
-                            body = ""
-                            if msg.is_multipart():
-                                for part in msg.walk():
-                                    if part.get_content_type() == "text/plain":
-                                        try:
-                                            body += part.get_payload(decode=True).decode("utf-8", errors='ignore')
-                                        except:
-                                            pass
-                                    elif part.get_content_type() == "text/html":
-                                        try:
-                                            body += part.get_payload(decode=True).decode("utf-8", errors='ignore')
-                                        except:
-                                            pass
-                            else:
-                                try:
-                                    body = msg.get_payload(decode=True).decode("utf-8", errors='ignore')
-                                except:
-                                    body = msg.get_payload()
-
-                            # Extração por Regex (Genérico)
-                            # Pedido
-                            order_match = re.search(r'(?:Pedido|Order|Transação)[\s:#]*(GG[\d\-A-Z]+|\d+)', body, re.IGNORECASE)
-                            if not order_match:
-                                # Tentar achar no assunto
-                                order_match = re.search(r'#(\d+)', subject)
-                            order_id = order_match.group(1).strip() if order_match else None
-                            
-                            if not order_id:
-                                continue # Não é um email de venda válido
-                                
-                            # Checar se já existe
-                            cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
-                            if cursor.fetchone():
-                                skipped += 1
-                                continue
-                                
-                            # Produto
-                            product_match = re.search(r'(?:Produto|Item)[\s:#]*(.+?)(?:\r|\n|<br)', body, re.IGNORECASE)
-                            product_name = product_match.group(1).strip() if product_match else "Produto GGMax"
-                            
-                            # Remover tags HTML do nome do produto se tiver
-                            product_name = re.sub(r'<[^>]+>', '', product_name)
-                            
-                            # Comprador
-                            buyer_email = "Cliente GGMax"
-                            email_match = re.search(r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', body)
-                            if email_match and "ggmax" not in email_match.group(1).lower():
-                                buyer_email = email_match.group(1)
-                                
-                            # Duração
-                            duration_days = extract_duration_from_text(product_name + " " + body) or 30
-                            
-                            # Data
-                            sale_date = datetime.datetime.now()
-                            expiration_date = sale_date + datetime.timedelta(days=duration_days)
-                            account_details = f"Importado automaticamente via E-mail (GGMax).\nPedido: {order_id}"
-                            
-                            cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status, duration_days, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                                (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), 'active', duration_days, 'ggmax'))
-                            imported += 1
-                except Exception as ex_mail:
-                    print(f"Erro ao processar email: {ex_mail}")
+            full_text = content
+            for embed in embeds:
+                full_text += f" {embed.get('title', '')} {embed.get('description', '')}"
+                for field in embed.get('fields', []):
+                    full_text += f" {field.get('name', '')} {field.get('value', '')}"
                     
-            conn.commit()
-            conn.close()
+            if not full_text.strip():
+                continue
+                
+            if len(debug_info) < 3:
+                debug_info.append({"subject": "Discord Message", "body": full_text[:500]})
+                
+            # Regex para Pedido
+            order_match = re.search(r'#([A-Z0-9]{6,12})', full_text)
+            if not order_match:
+                order_match = re.search(r'Pedido:[\s<]*#?([A-Z0-9]+)', full_text, re.IGNORECASE)
+            order_id = order_match.group(1).strip() if order_match else None
             
-        mail.close()
-        mail.logout()
+            if not order_id:
+                continue
+                
+            cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
+            if cursor.fetchone():
+                skipped += 1
+                continue
+                
+            # Regex para Produto
+            # GGMax discord webhook embed costuma ser: "1 x CHATGPT PLUS..."
+            product_match = re.search(r'\d+\s*[xX]\s*([^\n\r]+)', full_text)
+            product_name = product_match.group(1).strip() if product_match else "Produto GGMax"
+            
+            # Limpar formatação Markdown caso venha (**Produto**)
+            product_name = product_name.replace('**', '').replace('__', '')
+            
+            buyer_email = "Cliente GGMax"
+            
+            duration_days = extract_duration_from_text(full_text) or 30
+            
+            sale_date = datetime.datetime.now()
+            # Se a mensagem tiver timestamp original, podemos usar
+            msg_timestamp = msg.get('timestamp')
+            if msg_timestamp:
+                try:
+                    # formato ISO 8601: "2023-01-01T12:00:00+00:00"
+                    msg_date = msg_timestamp.split('T')[0]
+                    sale_date = datetime.datetime.strptime(msg_date, '%Y-%m-%d')
+                except:
+                    pass
+
+            expiration_date = sale_date + datetime.timedelta(days=duration_days)
+            account_details = f"Importado automaticamente via Discord.\nPedido: {order_id}"
+            
+            cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status, duration_days, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), 'active', duration_days, 'ggmax'))
+            imported += 1
+            
+        conn.commit()
+        conn.close()
         
     except Exception as e:
         errors.append(str(e))
-        print("Erro no IMAP GGMax:", e)
-        return jsonify({"error": f"Falha na conexão de email: {str(e)}"}), 500
+        print("Erro no Discord Sync:", e)
+        return jsonify({"error": f"Falha na conexão com o Discord: {str(e)}"}), 500
         
-    return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors})
+    return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors, "debug_info": debug_info})
 
 # === VERIFICAÇÃO DE REFUNDS ===
 

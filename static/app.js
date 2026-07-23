@@ -194,30 +194,34 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSales();
     });
 
-    // Importar via Email (GGMax)
-    const importGgmaxEmailBtn = document.getElementById('import-ggmax-email-btn');
-    if(importGgmaxEmailBtn) {
-        importGgmaxEmailBtn.addEventListener('click', async () => {
-            if (!confirm('O painel irá buscar os últimos 50 e-mails enviados pela GGMax na sua caixa de entrada e importar as vendas.\n\nIMPORTANTE: Você precisa ter configurado as variáveis EMAIL_USER e EMAIL_PASS (Senha de App do Google) no Railway.\n\nDeseja continuar?')) return;
+    // Importar via Discord API (GGMax)
+    const importGgmaxDiscordBtn = document.getElementById('import-ggmax-discord-btn');
+    if(importGgmaxDiscordBtn) {
+        importGgmaxDiscordBtn.addEventListener('click', async () => {
+            if (!confirm('O painel irá conectar no seu Discord e puxar as últimas 100 mensagens do canal de vendas da GGMax.\n\nIMPORTANTE: Você precisa ter configurado DISCORD_BOT_TOKEN e DISCORD_CHANNEL_ID.\n\nDeseja continuar?')) return;
             
-            importGgmaxEmailBtn.textContent = '⏳ Sincronizando...';
-            importGgmaxEmailBtn.disabled = true;
+            importGgmaxDiscordBtn.textContent = '⏳ Sincronizando...';
+            importGgmaxDiscordBtn.disabled = true;
             
             try {
-                const res = await fetch('/api/import/ggmax-email', { method: 'POST' });
+                const res = await fetch('/api/import/ggmax-discord-sync', { method: 'POST' });
                 const data = await res.json();
                 
                 if (res.ok) {
-                    alert(`Sincronização concluída!\n\n${data.imported} novas vendas importadas.\n${data.skipped} já existiam no sistema.`);
+                    if (data.imported === 0 && data.debug_info && data.debug_info.length > 0) {
+                        alert(`Li ${data.skipped} mensagens que já existiam, mas encontrei novas mensagens que o robô não entendeu o formato. Veja o conteúdo da primeira:\n\n${data.debug_info[0].body.substring(0, 250)}`);
+                    } else {
+                        alert(`Sincronização concluída!\n\n${data.imported} novas vendas importadas.\n${data.skipped} já existiam no sistema.`);
+                    }
                 } else {
                     alert(`Erro na sincronização: ${data.error || 'Erro desconhecido'}`);
                 }
             } catch(e) {
-                alert('Erro de conexão ao tentar ler e-mails.');
+                alert('Erro de conexão ao tentar ler o Discord.');
             }
             
-            importGgmaxEmailBtn.textContent = '📧 Sincronizar E-mails GGMax';
-            importGgmaxEmailBtn.disabled = false;
+            importGgmaxDiscordBtn.textContent = '👾 Sincronizar Discord GGMax';
+            importGgmaxDiscordBtn.disabled = false;
             loadSales();
         });
     }
@@ -312,6 +316,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init
     loadSales();
     
-    // Auto-refresh a cada 15 segundos
+    // Auto-refresh da tabela a cada 15 segundos
     setInterval(loadSales, 15000);
+    
+    // Auto-sync do Discord GGMax a cada 5 minutos (silencioso)
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/import/ggmax-discord-sync', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.imported > 0) {
+                    loadSales(); // recarrega a tabela se achou venda nova
+                }
+            }
+        } catch(e) {
+            console.error("Erro no auto-sync do Discord:", e);
+        }
+    }, 300000);
 });
