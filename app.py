@@ -335,6 +335,26 @@ def import_digiseller():
                         sale_date = datetime.datetime.now()
                 
                 duration_days = extract_duration_from_sale(sale, product_name)
+                
+                # Se caiu no fallback (7 dias), buscar detalhes individuais da venda
+                if duration_days == 7:
+                    try:
+                        info_url = f"https://api.digiseller.com/api/purchases/unique-code/{order_id}?token={token}"
+                        info_resp = requests.get(info_url, headers={"Accept": "application/json"})
+                        if info_resp.status_code == 200:
+                            info_data = info_resp.json()
+                            # Procurar duração em TODO o JSON da resposta
+                            full_text = json.dumps(info_data, ensure_ascii=False, default=str)
+                            from database import extract_duration_from_text
+                            found = extract_duration_from_text(full_text)
+                            if found:
+                                duration_days = found
+                                print(f"[IMPORT DIGI] Venda {order_id}: duração encontrada via purchase/info = {duration_days} dias")
+                            else:
+                                print(f"[IMPORT DIGI] Venda {order_id}: purchase/info NÃO encontrou duração. Chaves: {list(info_data.keys()) if isinstance(info_data, dict) else 'não é dict'}")
+                    except Exception as e2:
+                        print(f"[IMPORT DIGI] Erro ao buscar detalhes da venda {order_id}: {e2}")
+                
                 print(f"[IMPORT DIGI] Venda {order_id}: produto='{product_name}', duração={duration_days} dias")
                 expiration_date = sale_date + datetime.timedelta(days=duration_days)
                 account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
@@ -380,7 +400,7 @@ def import_ggsel():
         
         page = 1
         while True:
-            url = f"https://seller.ggsel.com/api_sellers/api/seller-sells/v2?token={token}"
+            url = f"https://api.digiseller.com/api/seller-sells/v2?token={token}"
             payload = {
                 "id_seller": seller_id,
                 "product_ids": [],
