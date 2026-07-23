@@ -63,12 +63,15 @@ def get_ggsel_token():
     
     try:
         resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+        print(f"[GGSEL TOKEN] Status: {resp.status_code}, Resposta: {resp.text[:300]}")
         if resp.status_code == 200:
             data = resp.json()
             if data.get('retval') == 0:
                 return data.get('token')
+            else:
+                print(f"[GGSEL TOKEN] retval != 0: {data}")
     except Exception as e:
-        print("Erro ao gerar token GGSel:", e)
+        print(f"[GGSEL TOKEN] Erro ao gerar token GGSel: {e}")
     return None
 
 @app.route('/api/webhook/ggsel', methods=['POST'])
