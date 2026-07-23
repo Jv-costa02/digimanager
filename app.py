@@ -43,10 +43,40 @@ def get_digiseller_token():
         print("Erro ao gerar token:", e)
     return None
 
+def get_ggsel_token():
+    api_key = os.environ.get('GGSEL_API_KEY')
+    seller_id = os.environ.get('GGSEL_SELLER_ID')
+    
+    if not api_key or not seller_id:
+        return None
+        
+    timestamp = int(time.time())
+    sign_str = f"{api_key}{timestamp}"
+    sign = hashlib.sha256(sign_str.encode('utf-8')).hexdigest()
+    
+    url = "https://seller.ggsel.com/api_sellers/api/apilogin"
+    payload = {
+        "seller_id": seller_id,
+        "timestamp": timestamp,
+        "sign": sign
+    }
+    
+    try:
+        resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get('retval') == 0:
+                return data.get('token')
+    except Exception as e:
+        print("Erro ao gerar token GGSel:", e)
+    return None
+
 @app.route('/api/webhook/ggsel', methods=['POST'])
 def ggsel_webhook():
     data = request.json if request.is_json else request.form.to_dict()
-    order_id = data.get('order_id') or data.get('id_order') or data.get('inv_id')
+    
+    # GGSel usa ID_I como número da fatura
+    order_id = data.get('ID_I') or data.get('id_i') or data.get('order_id') or data.get('id_order') or data.get('inv_id')
     
     if not order_id:
         if 'TESTE' in str(data):
@@ -54,9 +84,48 @@ def ggsel_webhook():
         else:
             return jsonify({"error": "No order_id provided"}), 400
             
-    product_name = data.get('product_name') or data.get('name_goods') or 'Produto Desconhecido (GGSel)'
-    buyer_email = data.get('buyer_email') or data.get('email') or 'N/A'
-    account_details = data.get('account_details') or data.get('goods_content') or str(data)
+    ggsel_api_key = os.environ.get('GGSEL_API_KEY')
+    ggsel_seller_id = os.environ.get('GGSEL_SELLER_ID')
+    
+    if ggsel_api_key and ggsel_seller_id:
+        # MODO SEGURO GGSEL
+        token = get_ggsel_token()
+        if not token:
+            return jsonify({"error": "Authentication failed with GGSel"}), 500
+            
+        url = f"https://seller.ggsel.com/api_sellers/api/purchase/info/{order_id}?token={token}"
+        try:
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                p_info = resp.json()
+                
+                if p_info.get('retval') != 0:
+                    return jsonify({"error": "Purchase not found on GGSel"}), 404
+                    
+                content = p_info.get('content', {})
+                state = content.get('invoice_state')
+                owner = str(content.get('owner'))
+                
+                if owner != str(ggsel_seller_id):
+                    return jsonify({"error": "Purchase does not belong to this seller"}), 403
+                    
+                if str(state) not in ['3', '4']:
+                    return jsonify({"error": f"Invoice not paid. State: {state}"}), 400
+                
+                product_name = content.get('name') or data.get('product_name') or f"GGSel Produto (ID: {content.get('item_id')})"
+                buyer_email = data.get('email') or 'N/A'
+                account_details = f"WEBHOOK:\n{str(data)}\n\nAPI_INFO:\n{json.dumps(p_info, ensure_ascii=False)}"
+            else:
+                return jsonify({"error": "API request failed"}), 500
+        except Exception as e:
+            print("Erro API GGSel:", e)
+            return jsonify({"error": "Internal error verifying purchase"}), 500
+    else:
+        # MODO DE COMPATIBILIDADE (Fallback) GGSel
+        product_id = data.get('ID_D') or data.get('id_d') or 'Desconhecido'
+        product_name = data.get('product_name') or data.get('name_goods') or f"GGSel Produto (ID: {product_id})"
+        buyer_email = data.get('email') or data.get('buyer_email') or 'N/A'
+        account_details = data.get('account_details') or data.get('goods_content') or f"Venda processada pela GGSel. Detalhes indisponíveis no Webhook."
 
     days_to_expire = 7
     combined_info = (product_name + " " + account_details).lower()
