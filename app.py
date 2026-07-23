@@ -444,8 +444,17 @@ def import_ggmax_discord_sync():
                 for field in embed.get('fields', []):
                     full_text += f" {field.get('name', '')} {field.get('value', '')}"
                     
+            # Suporte para mensagens encaminhadas (simulações)
+            for snapshot in msg.get('message_snapshots', []):
+                snap_msg = snapshot.get('message', {})
+                full_text += " " + snap_msg.get('content', '')
+                for embed in snap_msg.get('embeds', []):
+                    full_text += f" {embed.get('title', '')} {embed.get('description', '')}"
+                    for field in embed.get('fields', []):
+                        full_text += f" {field.get('name', '')} {field.get('value', '')}"
+                        
             if len(debug_info) < 3:
-                debug_info.append({"subject": f"Discord Type: {msg.get('type')}", "body": json.dumps(msg, ensure_ascii=False)[:1000]})
+                debug_info.append({"subject": f"Discord Type: {msg.get('type')}", "body": full_text[:1000] if full_text.strip() else json.dumps(msg, ensure_ascii=False)[:1000]})
                 
             if not full_text.strip():
                 continue
@@ -469,8 +478,9 @@ def import_ggmax_discord_sync():
             product_match = re.search(r'\d+\s*[xX]\s*([^\n\r]+)', full_text)
             product_name = product_match.group(1).strip() if product_match else "Produto GGMax"
             
-            # Limpar formatação Markdown caso venha (**Produto**)
+            # Limpar formatação Markdown caso venha (**Produto**) e links [texto](url)
             product_name = product_name.replace('**', '').replace('__', '')
+            product_name = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', product_name)
             
             buyer_email = "Cliente GGMax"
             
