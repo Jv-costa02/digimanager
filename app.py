@@ -277,14 +277,18 @@ def import_digiseller():
     
     try:
         # Buscar vendas dos últimos 90 dias
-        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%d.%m.%Y 00:00:00')
-        date_finish = datetime.datetime.now().strftime('%d.%m.%Y 23:59:59')
+        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d %H:%M:%S')
+        date_finish = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        seller_id = int(os.environ.get('DIGISELLER_SELLER_ID', 0))
         
         page = 1
         while True:
             url = f"https://api.digiseller.com/api/seller-sells/v2?token={token}"
             payload = {
+                "id_seller": seller_id,
                 "product_ids": [],
+                "date_start": date_start,
+                "date_finish": date_finish,
                 "returned": 0,
                 "page": page,
                 "rows": 100
@@ -365,14 +369,18 @@ def import_ggsel():
     errors = []
     
     try:
-        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%d.%m.%Y 00:00:00')
-        date_finish = datetime.datetime.now().strftime('%d.%m.%Y 23:59:59')
+        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d %H:%M:%S')
+        date_finish = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        seller_id = int(os.environ.get('GGSEL_SELLER_ID', 0))
         
         page = 1
         while True:
             url = f"https://seller.ggsel.com/api_sellers/api/seller-sells/v2?token={token}"
             payload = {
+                "id_seller": seller_id,
                 "product_ids": [],
+                "date_start": date_start,
+                "date_finish": date_finish,
                 "returned": 0,
                 "page": page,
                 "rows": 100
