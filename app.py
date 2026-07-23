@@ -285,8 +285,6 @@ def import_digiseller():
             url = f"https://api.digiseller.com/api/seller-sells/v2?token={token}"
             payload = {
                 "product_ids": [],
-                "date_start": date_start,
-                "date_finish": date_finish,
                 "returned": 0,
                 "page": page,
                 "rows": 100
@@ -375,8 +373,6 @@ def import_ggsel():
             url = f"https://seller.ggsel.com/api_sellers/api/seller-sells/v2?token={token}"
             payload = {
                 "product_ids": [],
-                "date_start": date_start,
-                "date_finish": date_finish,
                 "returned": 0,
                 "page": page,
                 "rows": 100
