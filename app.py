@@ -6,7 +6,7 @@ import hashlib
 import time
 import requests
 import json
-from database import init_db, get_db
+from database import init_db, get_db, extract_duration_from_name
 
 app = Flask(__name__)
 init_db()
@@ -234,7 +234,7 @@ def get_sales():
     rows = cursor.fetchall()
     sales = []
     for row in rows:
-        sales.append({"id": row['id'], "order_id": row['order_id'], "product_name": row['product_name'], "account_details": row['account_details'], "buyer_email": row['buyer_email'], "sale_date": row['sale_date'], "expiration_date": row['expiration_date'], "status": row['status']})
+        sales.append({"id": row['id'], "order_id": row['order_id'], "product_name": row['product_name'], "account_details": row['account_details'], "buyer_email": row['buyer_email'], "sale_date": row['sale_date'], "expiration_date": row['expiration_date'], "status": row['status'], "duration_days": row['duration_days'] if 'duration_days' in row.keys() else 7, "source": row['source'] if 'source' in row.keys() else 'digiseller'})
     conn.close()
     return jsonify(sales)
 
@@ -331,7 +331,8 @@ def import_digiseller():
                     except:
                         sale_date = datetime.datetime.now()
                 
-                expiration_date = sale_date + datetime.timedelta(days=7)
+                duration_days = extract_duration_from_name(product_name)
+                expiration_date = sale_date + datetime.timedelta(days=duration_days)
                 account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
                 # Checar status do invoice
@@ -340,8 +341,8 @@ def import_digiseller():
                 if str(inv_state) == '5':
                     status = 'refunded'
                 
-                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status))
+                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status, duration_days, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status, duration_days, 'digiseller'))
                 imported += 1
             
             conn.commit()
@@ -419,7 +420,8 @@ def import_ggsel():
                     except:
                         sale_date = datetime.datetime.now()
                 
-                expiration_date = sale_date + datetime.timedelta(days=7)
+                duration_days = extract_duration_from_name(product_name)
+                expiration_date = sale_date + datetime.timedelta(days=duration_days)
                 account_details = f"Importado da GGSel.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
                 inv_state = sale.get('invoice_state', '') or sale.get('inv', {}).get('state', 3)
@@ -427,8 +429,8 @@ def import_ggsel():
                 if str(inv_state) == '5':
                     status = 'refunded'
                 
-                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status))
+                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status, duration_days, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status, duration_days, 'ggsel'))
                 imported += 1
             
             conn.commit()

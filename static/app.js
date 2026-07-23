@@ -108,10 +108,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (sale.uiStatus === 'warning') statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
                 else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
 
+                const sourceBadge = sale.source === 'ggsel' 
+                    ? '<span class="source-badge source-ggsel">GGSel</span>' 
+                    : '<span class="source-badge source-digi">Digiseller</span>';
+
                 tr.innerHTML = `
                     <td><strong>#${sale.order_id}</strong></td>
                     <td>${sale.product_name}</td>
+                    <td>${sourceBadge}</td>
                     <td>${sale.buyer_email}</td>
+                    <td><span class="duration-badge">${sale.duration_days || 7} dias</span></td>
                     <td>${new Date(sale.sale_date).toLocaleDateString()}</td>
                     <td>${new Date(sale.expiration_date).toLocaleDateString()}</td>
                     <td>${statusBadge}</td>
