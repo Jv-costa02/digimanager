@@ -310,7 +310,7 @@ def import_digiseller():
             conn = get_db()
             cursor = conn.cursor()
             for sale in rows:
-                order_id = str(sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
+                order_id = str(sale.get('invoice_id', '') or sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
                 if not order_id:
                     continue
                     
@@ -319,8 +319,8 @@ def import_digiseller():
                     skipped += 1
                     continue
                 
-                product_name = sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto Digiseller'
-                buyer_email = sale.get('email', '') or 'N/A'
+                product_name = sale.get('product_name', '') or sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto Digiseller'
+                buyer_email = sale.get('buyer_email', '') or sale.get('email', '') or 'N/A'
                 
                 sale_date_str = sale.get('date_pay', '') or sale.get('date_confirm', '') or datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 try:
@@ -335,7 +335,7 @@ def import_digiseller():
                 account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
                 # Checar status do invoice
-                inv_state = sale.get('inv', {}).get('state', 3)
+                inv_state = sale.get('invoice_state', '') or sale.get('inv', {}).get('state', 3)
                 status = 'active'
                 if str(inv_state) == '5':
                     status = 'refunded'
@@ -398,7 +398,7 @@ def import_ggsel():
             conn = get_db()
             cursor = conn.cursor()
             for sale in rows:
-                order_id = str(sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
+                order_id = str(sale.get('invoice_id', '') or sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
                 if not order_id:
                     continue
                     
@@ -407,8 +407,8 @@ def import_ggsel():
                     skipped += 1
                     continue
                 
-                product_name = sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto GGSel'
-                buyer_email = sale.get('email', '') or 'N/A'
+                product_name = sale.get('product_name', '') or sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto GGSel'
+                buyer_email = sale.get('buyer_email', '') or sale.get('email', '') or 'N/A'
                 
                 sale_date_str = sale.get('date_pay', '') or sale.get('date_confirm', '') or datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 try:
@@ -422,7 +422,7 @@ def import_ggsel():
                 expiration_date = sale_date + datetime.timedelta(days=7)
                 account_details = f"Importado da GGSel.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
-                inv_state = sale.get('inv', {}).get('state', 3)
+                inv_state = sale.get('invoice_state', '') or sale.get('inv', {}).get('state', 3)
                 status = 'active'
                 if str(inv_state) == '5':
                     status = 'refunded'
