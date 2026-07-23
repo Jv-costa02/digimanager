@@ -277,8 +277,8 @@ def import_digiseller():
     
     try:
         # Buscar vendas dos últimos 90 dias
-        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d 00:00:00')
-        date_finish = datetime.datetime.now().strftime('%Y-%m-%d 23:59:59')
+        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%d.%m.%Y 00:00:00')
+        date_finish = datetime.datetime.now().strftime('%d.%m.%Y 23:59:59')
         
         page = 1
         while True:
@@ -367,8 +367,8 @@ def import_ggsel():
     errors = []
     
     try:
-        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d 00:00:00')
-        date_finish = datetime.datetime.now().strftime('%Y-%m-%d 23:59:59')
+        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%d.%m.%Y 00:00:00')
+        date_finish = datetime.datetime.now().strftime('%d.%m.%Y 23:59:59')
         
         page = 1
         while True:
