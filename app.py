@@ -242,7 +242,7 @@ def get_sales():
 def update_status(sale_id):
     data = request.json
     new_status = data.get('status')
-    if new_status not in ['active', 'revoked']:
+    if new_status not in ['active', 'revoked', 'refunded']:
         return jsonify({"error": "Invalid status"}), 400
     conn = get_db()
     cursor = conn.cursor()
@@ -262,6 +262,247 @@ def clear_all():
     conn.commit()
     conn.close()
     return jsonify({"status": "success", "message": "All data cleared"})
+
+# === IMPORTAÇÃO DE VENDAS ANTIGAS ===
+
+@app.route('/api/import/digiseller', methods=['POST'])
+def import_digiseller():
+    token = get_digiseller_token()
+    if not token:
+        return jsonify({"error": "Digiseller não configurada ou falha na autenticação"}), 400
+    
+    imported = 0
+    skipped = 0
+    errors = []
+    
+    try:
+        # Buscar vendas dos últimos 90 dias
+        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d 00:00:00')
+        date_finish = datetime.datetime.now().strftime('%Y-%m-%d 23:59:59')
+        
+        page = 1
+        while True:
+            url = f"https://api.digiseller.com/api/seller-sells/v2?token={token}"
+            payload = {
+                "product_ids": [],
+                "date_start": date_start,
+                "date_finish": date_finish,
+                "returned": 0,
+                "page": page,
+                "rows": 100
+            }
+            resp = requests.post(url, json=payload, headers={"Content-Type": "application/json", "Accept": "application/json"})
+            if resp.status_code != 200:
+                errors.append(f"API retornou status {resp.status_code} na página {page}")
+                break
+                
+            data = resp.json()
+            rows = data.get('rows', [])
+            if not rows:
+                break
+            
+            conn = get_db()
+            cursor = conn.cursor()
+            for sale in rows:
+                order_id = str(sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
+                if not order_id:
+                    continue
+                    
+                cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
+                if cursor.fetchone():
+                    skipped += 1
+                    continue
+                
+                product_name = sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto Digiseller'
+                buyer_email = sale.get('email', '') or 'N/A'
+                
+                sale_date_str = sale.get('date_pay', '') or sale.get('date_confirm', '') or datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                try:
+                    sale_date = datetime.datetime.strptime(sale_date_str[:19], '%Y-%m-%dT%H:%M:%S')
+                except:
+                    try:
+                        sale_date = datetime.datetime.strptime(sale_date_str[:19], '%Y-%m-%d %H:%M:%S')
+                    except:
+                        sale_date = datetime.datetime.now()
+                
+                expiration_date = sale_date + datetime.timedelta(days=7)
+                account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
+                
+                # Checar status do invoice
+                inv_state = sale.get('inv', {}).get('state', 3)
+                status = 'active'
+                if str(inv_state) == '5':
+                    status = 'refunded'
+                
+                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status))
+                imported += 1
+            
+            conn.commit()
+            conn.close()
+            
+            # Se recebeu menos que 100, acabaram as páginas
+            if len(rows) < 100:
+                break
+            page += 1
+            
+    except Exception as e:
+        errors.append(str(e))
+        print("Erro ao importar Digiseller:", e)
+    
+    return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors})
+
+@app.route('/api/import/ggsel', methods=['POST'])
+def import_ggsel():
+    token = get_ggsel_token()
+    if not token:
+        return jsonify({"error": "GGSel não configurada ou falha na autenticação"}), 400
+    
+    imported = 0
+    skipped = 0
+    errors = []
+    
+    try:
+        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d 00:00:00')
+        date_finish = datetime.datetime.now().strftime('%Y-%m-%d 23:59:59')
+        
+        page = 1
+        while True:
+            url = f"https://seller.ggsel.com/api_sellers/api/seller-sells/v2?token={token}"
+            payload = {
+                "product_ids": [],
+                "date_start": date_start,
+                "date_finish": date_finish,
+                "returned": 0,
+                "page": page,
+                "rows": 100
+            }
+            resp = requests.post(url, json=payload, headers={"Content-Type": "application/json", "Accept": "application/json"})
+            if resp.status_code != 200:
+                errors.append(f"API GGSel retornou status {resp.status_code} na página {page}")
+                break
+                
+            data = resp.json()
+            rows = data.get('rows', [])
+            if not rows:
+                break
+            
+            conn = get_db()
+            cursor = conn.cursor()
+            for sale in rows:
+                order_id = str(sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
+                if not order_id:
+                    continue
+                    
+                cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
+                if cursor.fetchone():
+                    skipped += 1
+                    continue
+                
+                product_name = sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto GGSel'
+                buyer_email = sale.get('email', '') or 'N/A'
+                
+                sale_date_str = sale.get('date_pay', '') or sale.get('date_confirm', '') or datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                try:
+                    sale_date = datetime.datetime.strptime(sale_date_str[:19], '%Y-%m-%dT%H:%M:%S')
+                except:
+                    try:
+                        sale_date = datetime.datetime.strptime(sale_date_str[:19], '%Y-%m-%d %H:%M:%S')
+                    except:
+                        sale_date = datetime.datetime.now()
+                
+                expiration_date = sale_date + datetime.timedelta(days=7)
+                account_details = f"Importado da GGSel.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
+                
+                inv_state = sale.get('inv', {}).get('state', 3)
+                status = 'active'
+                if str(inv_state) == '5':
+                    status = 'refunded'
+                
+                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status))
+                imported += 1
+            
+            conn.commit()
+            conn.close()
+            
+            if len(rows) < 100:
+                break
+            page += 1
+            
+    except Exception as e:
+        errors.append(str(e))
+        print("Erro ao importar GGSel:", e)
+    
+    return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors})
+
+# === VERIFICAÇÃO DE REFUNDS ===
+
+@app.route('/api/check-refunds', methods=['POST'])
+def check_refunds():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, order_id FROM sales WHERE status = 'active'")
+    active_sales = cursor.fetchall()
+    conn.close()
+    
+    refunded_count = 0
+    checked = 0
+    errors = []
+    
+    # Checar na Digiseller
+    digi_token = get_digiseller_token()
+    ggsel_token = get_ggsel_token()
+    
+    for sale in active_sales:
+        sale_id = sale['id']
+        order_id = str(sale['order_id'])
+        
+        # Tentar na Digiseller primeiro
+        if digi_token:
+            try:
+                url = f"https://api.digiseller.com/api/purchase/info/{order_id}?token={digi_token}"
+                resp = requests.get(url)
+                if resp.status_code == 200:
+                    p_info = resp.json()
+                    if p_info.get('retval') == 0:
+                        state = p_info.get('invoice_state')
+                        if state is None and 'inv' in p_info:
+                            state = p_info['inv'].get('state')
+                        if str(state) == '5':
+                            conn = get_db()
+                            cursor = conn.cursor()
+                            cursor.execute("UPDATE sales SET status = 'refunded' WHERE id = ?", (sale_id,))
+                            conn.commit()
+                            conn.close()
+                            refunded_count += 1
+                        checked += 1
+                        continue
+            except Exception as e:
+                pass
+        
+        # Tentar na GGSel
+        if ggsel_token:
+            try:
+                url = f"https://seller.ggsel.com/api_sellers/api/purchase/info/{order_id}?token={ggsel_token}"
+                resp = requests.get(url)
+                if resp.status_code == 200:
+                    p_info = resp.json()
+                    if p_info.get('retval') == 0:
+                        content = p_info.get('content', {})
+                        state = content.get('invoice_state')
+                        if str(state) == '5':
+                            conn = get_db()
+                            cursor = conn.cursor()
+                            cursor.execute("UPDATE sales SET status = 'refunded' WHERE id = ?", (sale_id,))
+                            conn.commit()
+                            conn.close()
+                            refunded_count += 1
+                        checked += 1
+            except Exception as e:
+                pass
+    
+    return jsonify({"status": "success", "checked": checked, "refunded": refunded_count})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

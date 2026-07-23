@@ -5,12 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('table-body');
     const emptyState = document.getElementById('empty-state');
     const refreshBtn = document.getElementById('refresh-btn');
+    const importBtn = document.getElementById('import-btn');
+    const checkRefundBtn = document.getElementById('check-refund-btn');
     const tabs = document.querySelectorAll('.tab');
 
     // Stats elements
     const countActive = document.getElementById('count-active');
     const countWarning = document.getElementById('count-warning');
     const countDanger = document.getElementById('count-danger');
+    const countRefunded = document.getElementById('count-refunded');
 
     // Modal elements
     const modal = document.getElementById('modal');
@@ -29,6 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
             allSales.forEach(sale => {
                 if (sale.status === 'revoked') {
                     sale.uiStatus = 'revoked';
+                    return;
+                }
+                if (sale.status === 'refunded') {
+                    sale.uiStatus = 'refunded';
                     return;
                 }
 
@@ -60,10 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const active = allSales.filter(s => s.uiStatus === 'active' || s.uiStatus === 'warning' || s.uiStatus === 'danger').length;
         const warning = allSales.filter(s => s.uiStatus === 'warning').length;
         const danger = allSales.filter(s => s.uiStatus === 'danger').length;
+        const refunded = allSales.filter(s => s.uiStatus === 'refunded').length;
 
         countActive.textContent = active;
         countWarning.textContent = warning;
         countDanger.textContent = danger;
+        countRefunded.textContent = refunded;
     }
 
     function renderTable() {
@@ -78,6 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredSales = allSales.filter(s => s.uiStatus === 'danger');
         } else if (currentFilter === 'revoked') {
             filteredSales = allSales.filter(s => s.uiStatus === 'revoked');
+        } else if (currentFilter === 'refunded') {
+            filteredSales = allSales.filter(s => s.uiStatus === 'refunded');
         }
 
         if (filteredSales.length === 0) {
@@ -92,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let statusBadge = '';
                 if (sale.uiStatus === 'revoked') statusBadge = '<span class="status-badge status-revoked">Acesso Retirado</span>';
+                else if (sale.uiStatus === 'refunded') statusBadge = '<span class="status-badge status-refunded">Reembolsado</span>';
                 else if (sale.uiStatus === 'danger') statusBadge = '<span class="status-badge status-danger">Expirada</span>';
                 else if (sale.uiStatus === 'warning') statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
                 else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
@@ -148,6 +160,75 @@ document.addEventListener('DOMContentLoaded', () => {
     modalClose.addEventListener('click', () => modal.classList.add('hidden'));
     
     refreshBtn.addEventListener('click', loadSales);
+
+    // Importar vendas antigas
+    importBtn.addEventListener('click', async () => {
+        if (!confirm('Importar vendas dos últimos 90 dias da Digiseller e GGSel?')) return;
+        
+        importBtn.textContent = '⏳ Importando...';
+        importBtn.disabled = true;
+        
+        let totalImported = 0;
+        let totalSkipped = 0;
+        let messages = [];
+        
+        try {
+            // Importar da Digiseller
+            const resDigi = await fetch('/api/import/digiseller', { method: 'POST' });
+            const dataDigi = await resDigi.json();
+            if (resDigi.ok) {
+                totalImported += dataDigi.imported || 0;
+                totalSkipped += dataDigi.skipped || 0;
+                messages.push(`Digiseller: ${dataDigi.imported} importadas, ${dataDigi.skipped} já existentes`);
+            } else {
+                messages.push(`Digiseller: ${dataDigi.error || 'Erro'}`);
+            }
+        } catch(e) {
+            messages.push('Digiseller: Erro de conexão');
+        }
+        
+        try {
+            // Importar da GGSel
+            const resGG = await fetch('/api/import/ggsel', { method: 'POST' });
+            const dataGG = await resGG.json();
+            if (resGG.ok) {
+                totalImported += dataGG.imported || 0;
+                totalSkipped += dataGG.skipped || 0;
+                messages.push(`GGSel: ${dataGG.imported} importadas, ${dataGG.skipped} já existentes`);
+            } else {
+                messages.push(`GGSel: ${dataGG.error || 'Erro'}`);
+            }
+        } catch(e) {
+            messages.push('GGSel: Erro de conexão');
+        }
+        
+        alert(`Importação concluída!\n\n${messages.join('\n')}\n\nTotal: ${totalImported} novas vendas importadas.`);
+        importBtn.textContent = '📥 Importar Vendas';
+        importBtn.disabled = false;
+        loadSales();
+    });
+
+    // Checar refunds
+    checkRefundBtn.addEventListener('click', async () => {
+        checkRefundBtn.textContent = '⏳ Checando...';
+        checkRefundBtn.disabled = true;
+        
+        try {
+            const res = await fetch('/api/check-refunds', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`Verificação concluída!\n\n${data.checked} vendas verificadas.\n${data.refunded} reembolsos detectados.`);
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        } catch(e) {
+            alert('Erro ao verificar refunds.');
+        }
+        
+        checkRefundBtn.textContent = '🔍 Checar Refunds';
+        checkRefundBtn.disabled = false;
+        loadSales();
+    });
 
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {

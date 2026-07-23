@@ -27,6 +27,10 @@
                     <span class="stat-label">Expiradas (Ação Requerida)</span>
                     <span class="stat-value" id="count-danger">0</span>
                 </div>
+                <div class="stat-box refund-box">
+                    <span class="stat-label">Reembolsados</span>
+                    <span class="stat-value" id="count-refunded">0</span>
+                </div>
             </div>
         </header>
         
@@ -37,8 +41,11 @@
                     <button class="tab" data-filter="expiring_today">Expirando Hoje</button>
                     <button class="tab" data-filter="expired">Expiradas (Pendente)</button>
                     <button class="tab" data-filter="revoked">Acesso Retirado</button>
+                    <button class="tab" data-filter="refunded">Reembolsados</button>
                 </div>
                 <div class="actions">
+                    <button class="btn btn-import" id="import-btn">📥 Importar Vendas</button>
+                    <button class="btn btn-check-refund" id="check-refund-btn">🔍 Checar Refunds</button>
                     <button class="btn btn-refresh" id="refresh-btn">⟳ Atualizar</button>
                 </div>
             </div>

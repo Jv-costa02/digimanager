@@ -101,6 +101,7 @@ body {
 .active-box .stat-value { color: var(--success); }
 .warning-box .stat-value { color: var(--warning); }
 .danger-box .stat-value { color: var(--danger); }
+.refund-box .stat-value { color: #a78bfa; }
 
 .content {
     background: var(--card-bg);
@@ -224,6 +225,26 @@ body {
 .status-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 .status-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 .status-revoked { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+.status-refunded { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; }
+
+.btn-import {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    font-size: 0.85rem;
+}
+.btn-import:hover { background: linear-gradient(135deg, #4f46e5, #9333ea); }
+
+.btn-check-refund {
+    background: rgba(167, 139, 250, 0.3);
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    font-size: 0.85rem;
+}
+.btn-check-refund:hover { background: rgba(167, 139, 250, 0.5); }
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
 
 .empty-state {
     text-align: center;
