@@ -292,13 +292,17 @@ def import_digiseller():
                 "rows": 100
             }
             resp = requests.post(url, json=payload, headers={"Content-Type": "application/json", "Accept": "application/json"})
+            print(f"[IMPORT DIGI] Status: {resp.status_code}")
             if resp.status_code != 200:
                 errors.append(f"API retornou status {resp.status_code} na página {page}")
                 break
                 
             data = resp.json()
-            rows = data.get('rows', [])
-            if not rows:
+            print(f"[IMPORT DIGI] Chaves da resposta: {list(data.keys())}")
+            print(f"[IMPORT DIGI] Resposta completa (primeiros 500 chars): {str(data)[:500]}")
+            rows = data.get('rows', data.get('sells', data.get('sales', data.get('list', []))))
+            print(f"[IMPORT DIGI] Total de vendas encontradas: {len(rows) if isinstance(rows, list) else 'NAO E LISTA: ' + str(type(rows))}")
+            if not rows or not isinstance(rows, list):
                 break
             
             conn = get_db()
