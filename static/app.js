@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${statusBadge}</td>
                     <td>
                         <button class="btn btn-details" onclick="showDetails('${encodeURIComponent(sale.account_details)}')">Ver Dados</button>
+                        <button class="btn btn-details" onclick="editarData(${sale.id}, '${sale.sale_date.split(' ')[0]}')" title="Editar Data de Compra">✏️</button>
                         ${sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id})" style="background: #ca8a04; margin-top: 5px;">Retirar</button>` : ''}
                         <button class="btn btn-revoke" onclick="deletarVenda(${sale.id})" style="background: #ef4444; margin-top: 5px;">Excluir</button>
                     </td>
@@ -344,6 +345,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {
             console.error("Erro no auto-sync do Discord:", e);
+        }
+    }, 300000);
+
+    // Auto-sync do Digiseller a cada 5 minutos (silencioso)
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/import/digiseller', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.imported > 0) {
+                    loadSales(); 
+                }
+            }
+        } catch(e) {
+            console.error("Erro no auto-sync da Digiseller:", e);
         }
     }, 300000);
 });
