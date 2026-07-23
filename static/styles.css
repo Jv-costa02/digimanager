@@ -30,9 +30,10 @@ body {
 }
 
 .app-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem;
+    overflow-x: hidden;
 }
 
 .header {
@@ -168,41 +169,48 @@ body {
 
 .btn-revoke {
     background: var(--danger);
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
 }
 .btn-revoke:hover { background: #dc2626; }
 
 .btn-details {
     background: rgba(255,255,255,0.1);
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
-    margin-right: 0.5rem;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
+    margin-right: 0.3rem;
 }
 .btn-details:hover { background: rgba(255,255,255,0.2); }
 
 .table-container {
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 .sales-table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
+    table-layout: fixed;
 }
 
 .sales-table th {
-    padding: 1rem;
+    padding: 0.6rem 0.5rem;
     border-bottom: 1px solid var(--border);
     color: var(--text-muted);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .sales-table td {
-    padding: 1rem;
+    padding: 0.5rem 0.5rem;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 0.95rem;
+    font-size: 0.8rem;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sales-table tbody tr {
@@ -214,11 +222,12 @@ body {
 }
 
 .status-badge {
-    padding: 0.3rem 0.6rem;
+    padding: 0.2rem 0.5rem;
     border-radius: 12px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     display: inline-block;
+    white-space: nowrap;
 }
 
 .status-active { background: rgba(16, 185, 129, 0.2); color: #34d399; }
@@ -232,6 +241,12 @@ body {
     font-size: 0.85rem;
 }
 .btn-import:hover { background: linear-gradient(135deg, #4f46e5, #9333ea); }
+
+.btn-add-ggmax {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+    font-size: 0.85rem;
+}
+.btn-add-ggmax:hover { background: linear-gradient(135deg, #ca8a04, #a16207); }
 
 .btn-check-refund {
     background: rgba(167, 139, 250, 0.3);
@@ -295,12 +310,13 @@ body {
 
 /* Source Badges */
 .source-badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.65rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 .source-digi {
@@ -309,7 +325,7 @@ body {
     border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
-.source-ggsel {
+.source-ggmax {
     background: rgba(234, 179, 8, 0.2);
     color: #fde047;
     border: 1px solid rgba(234, 179, 8, 0.3);
@@ -317,11 +333,12 @@ body {
 
 /* Duration Badge */
 .duration-badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.65rem;
     font-weight: 600;
     background: rgba(14, 165, 233, 0.15);
     color: #7dd3fc;
     border: 1px solid rgba(14, 165, 233, 0.3);
+    white-space: nowrap;
 }

@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateStats() {
-        const active = allSales.filter(s => s.uiStatus === 'active' || s.uiStatus === 'warning' || s.uiStatus === 'danger').length;
+        const active = allSales.filter(s => s.uiStatus === 'active').length;
         const warning = allSales.filter(s => s.uiStatus === 'warning').length;
         const danger = allSales.filter(s => s.uiStatus === 'danger').length;
         const refunded = allSales.filter(s => s.uiStatus === 'refunded').length;
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let filteredSales = allSales;
         if (currentFilter === 'active') {
-            filteredSales = allSales.filter(s => s.uiStatus !== 'revoked');
+            filteredSales = allSales.filter(s => s.uiStatus === 'active');
         } else if (currentFilter === 'expiring_today') {
             filteredSales = allSales.filter(s => s.uiStatus === 'warning');
         } else if (currentFilter === 'expired') {
@@ -108,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (sale.uiStatus === 'warning') statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
                 else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
 
-                const sourceBadge = sale.source === 'ggsel' 
-                    ? '<span class="source-badge source-ggsel">GGSel</span>' 
+                const sourceBadge = (sale.source === 'ggsel' || sale.source === 'ggmax')
+                    ? '<span class="source-badge source-ggmax">GGMax</span>' 
                     : '<span class="source-badge source-digi">Digiseller</span>';
 
                 tr.innerHTML = `
@@ -169,22 +169,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Importar vendas antigas
     importBtn.addEventListener('click', async () => {
-        if (!confirm('Importar vendas dos últimos 90 dias da Digiseller e GGSel?')) return;
+        if (!confirm('Importar vendas dos últimos 90 dias da Digiseller?')) return;
         
         importBtn.textContent = '⏳ Importando...';
         importBtn.disabled = true;
         
-        let totalImported = 0;
-        let totalSkipped = 0;
         let messages = [];
         
         try {
-            // Importar da Digiseller
             const resDigi = await fetch('/api/import/digiseller', { method: 'POST' });
             const dataDigi = await resDigi.json();
             if (resDigi.ok) {
-                totalImported += dataDigi.imported || 0;
-                totalSkipped += dataDigi.skipped || 0;
                 messages.push(`Digiseller: ${dataDigi.imported} importadas, ${dataDigi.skipped} já existentes`);
             } else {
                 messages.push(`Digiseller: ${dataDigi.error || 'Erro'}`);
@@ -193,25 +188,94 @@ document.addEventListener('DOMContentLoaded', () => {
             messages.push('Digiseller: Erro de conexão');
         }
         
-        try {
-            // Importar da GGSel
-            const resGG = await fetch('/api/import/ggsel', { method: 'POST' });
-            const dataGG = await resGG.json();
-            if (resGG.ok) {
-                totalImported += dataGG.imported || 0;
-                totalSkipped += dataGG.skipped || 0;
-                messages.push(`GGSel: ${dataGG.imported} importadas, ${dataGG.skipped} já existentes`);
-            } else {
-                messages.push(`GGSel: ${dataGG.error || 'Erro'}`);
-            }
-        } catch(e) {
-            messages.push('GGSel: Erro de conexão');
-        }
-        
-        alert(`Importação concluída!\n\n${messages.join('\n')}\n\nTotal: ${totalImported} novas vendas importadas.`);
-        importBtn.textContent = '📥 Importar Vendas';
+        alert(`Importação concluída!\n\n${messages.join('\n')}`);
+        importBtn.textContent = '📥 Importar Digiseller';
         importBtn.disabled = false;
         loadSales();
+    });
+
+    // Importar via Email (GGMax)
+    const importGgmaxEmailBtn = document.getElementById('import-ggmax-email-btn');
+    if(importGgmaxEmailBtn) {
+        importGgmaxEmailBtn.addEventListener('click', async () => {
+            if (!confirm('O painel irá buscar os últimos 50 e-mails enviados pela GGMax na sua caixa de entrada e importar as vendas.\n\nIMPORTANTE: Você precisa ter configurado as variáveis EMAIL_USER e EMAIL_PASS (Senha de App do Google) no Railway.\n\nDeseja continuar?')) return;
+            
+            importGgmaxEmailBtn.textContent = '⏳ Sincronizando...';
+            importGgmaxEmailBtn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/import/ggmax-email', { method: 'POST' });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert(`Sincronização concluída!\n\n${data.imported} novas vendas importadas.\n${data.skipped} já existiam no sistema.`);
+                } else {
+                    alert(`Erro na sincronização: ${data.error || 'Erro desconhecido'}`);
+                }
+            } catch(e) {
+                alert('Erro de conexão ao tentar ler e-mails.');
+            }
+            
+            importGgmaxEmailBtn.textContent = '📧 Sincronizar E-mails GGMax';
+            importGgmaxEmailBtn.disabled = false;
+            loadSales();
+        });
+    }
+
+    // Modal GGMax
+    const ggmaxModal = document.getElementById('ggmax-modal');
+    const addGgmaxBtn = document.getElementById('add-ggmax-btn');
+    const ggmaxClose = document.getElementById('ggmax-close');
+    const ggmaxSubmit = document.getElementById('ggmax-submit');
+    const ggmaxForm = document.getElementById('ggmax-form');
+
+    addGgmaxBtn.addEventListener('click', () => {
+        ggmaxForm.reset();
+        ggmaxModal.classList.remove('hidden');
+    });
+
+    ggmaxClose.addEventListener('click', () => ggmaxModal.classList.add('hidden'));
+
+    ggmaxSubmit.addEventListener('click', async () => {
+        if (!ggmaxForm.checkValidity()) {
+            ggmaxForm.reportValidity();
+            return;
+        }
+
+        const orderId = document.getElementById('ggmax-order-id').value;
+        const product = document.getElementById('ggmax-product').value;
+        const email = document.getElementById('ggmax-email').value;
+        const duration = document.getElementById('ggmax-duration').value;
+
+        ggmaxSubmit.textContent = '⏳ Salvando...';
+        ggmaxSubmit.disabled = true;
+
+        try {
+            const res = await fetch('/api/add-ggmax', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    product_name: product,
+                    buyer_email: email,
+                    duration_days: parseInt(duration)
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert('Venda GGMax adicionada com sucesso!');
+                ggmaxModal.classList.add('hidden');
+                loadSales();
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        } catch (e) {
+            alert('Erro ao conectar com o servidor.');
+        }
+
+        ggmaxSubmit.textContent = 'Salvar Venda';
+        ggmaxSubmit.disabled = false;
     });
 
     // Checar refunds

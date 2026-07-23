@@ -6,7 +6,11 @@ import hashlib
 import time
 import requests
 import json
-from database import init_db, get_db, extract_duration_from_sale
+import imaplib
+import email
+from email.header import decode_header
+import re
+from database import init_db, get_db, extract_duration_from_sale, extract_duration_from_text
 
 app = Flask(__name__)
 init_db()
@@ -386,97 +390,135 @@ def import_digiseller():
     
     return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors})
 
-@app.route('/api/import/ggsel', methods=['POST'])
-def import_ggsel():
-    token = get_ggsel_token()
-    if not token:
-        return jsonify({"error": "GGSel não configurada ou falha na autenticação"}), 400
+@app.route('/api/import/ggmax-email', methods=['POST'])
+def import_ggmax_email():
+    email_user = os.environ.get('EMAIL_USER')
+    email_pass = os.environ.get('EMAIL_PASS')
     
+    if not email_user or not email_pass:
+        return jsonify({"error": "Configuração de e-mail (EMAIL_USER / EMAIL_PASS) ausente no servidor."}), 400
+        
     imported = 0
     skipped = 0
     errors = []
     
     try:
-        date_start = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime('%Y-%m-%d %H:%M:%S')
-        date_finish = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        seller_id = int(os.environ.get('GGSEL_SELLER_ID', 0))
+        # Conectar ao Gmail
+        mail = imaplib.IMAP4_SSL("imap.gmail.com")
+        mail.login(email_user, email_pass)
+        mail.select("inbox")
         
-        page = 1
-        while True:
-            url = f"https://api.digiseller.com/api/seller-sells/v2?token={token}"
-            payload = {
-                "id_seller": seller_id,
-                "product_ids": [],
-                "date_start": date_start,
-                "date_finish": date_finish,
-                "returned": 0,
-                "page": page,
-                "rows": 100
-            }
-            resp = requests.post(url, json=payload, headers={"Content-Type": "application/json", "Accept": "application/json"})
-            print(f"[IMPORT GGSEL] Status: {resp.status_code}")
-            if resp.status_code != 200:
-                print(f"[IMPORT GGSEL] Erro: {resp.text[:500]}")
-                errors.append(f"API GGSel retornou status {resp.status_code} na página {page}")
-                break
-                
-            data = resp.json()
-            print(f"[IMPORT GGSEL] Chaves: {list(data.keys())}")
-            print(f"[IMPORT GGSEL] Resposta (500 chars): {str(data)[:500]}")
-            rows = data.get('rows', data.get('sells', data.get('sales', data.get('list', []))))
-            print(f"[IMPORT GGSEL] Total vendas: {len(rows) if isinstance(rows, list) else 'NAO E LISTA'}")
-            if not rows or not isinstance(rows, list):
-                break
+        # Buscar emails da GGMax (vamos buscar os mais recentes)
+        # Buscar na caixa de entrada por remetente ou assunto
+        status, messages = mail.search(None, '(FROM "ggmax")')
+        
+        if status != 'OK' or not messages[0]:
+            # Se não achou 'FROM ggmax', tenta buscar de forma geral os últimos 50 emails
+            status, messages = mail.search(None, 'ALL')
+            
+        if status == 'OK' and messages[0]:
+            email_ids = messages[0].split()
+            # Pegar os últimos 50 emails para não processar coisas muito velhas
+            email_ids = email_ids[-50:]
             
             conn = get_db()
             cursor = conn.cursor()
-            for sale in rows:
-                order_id = str(sale.get('invoice_id', '') or sale.get('inv', {}).get('id', '') or sale.get('id_i', ''))
-                if not order_id:
-                    continue
-                    
-                cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
-                if cursor.fetchone():
-                    skipped += 1
-                    continue
-                
-                product_name = sale.get('product_name', '') or sale.get('product', {}).get('name', '') or sale.get('name_goods', '') or 'Produto GGSel'
-                buyer_email = sale.get('buyer_email', '') or sale.get('email', '') or 'N/A'
-                
-                sale_date_str = sale.get('date_pay', '') or sale.get('date_confirm', '') or datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                try:
-                    sale_date = datetime.datetime.strptime(sale_date_str[:19], '%Y-%m-%dT%H:%M:%S')
-                except:
-                    try:
-                        sale_date = datetime.datetime.strptime(sale_date_str[:19], '%Y-%m-%d %H:%M:%S')
-                    except:
-                        sale_date = datetime.datetime.now()
-                
-                duration_days = extract_duration_from_sale(sale, product_name)
-                print(f"[IMPORT GGSEL] Venda {order_id}: produto='{product_name}', duração={duration_days} dias")
-                expiration_date = sale_date + datetime.timedelta(days=duration_days)
-                account_details = f"Importado da GGSel.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
-                
-                inv_state = sale.get('invoice_state', '') or sale.get('inv', {}).get('state', 3)
-                status = 'active'
-                if str(inv_state) == '5':
-                    status = 'refunded'
-                
-                cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status, duration_days, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), status, duration_days, 'ggsel'))
-                imported += 1
             
+            for e_id in reversed(email_ids):
+                try:
+                    res, msg_data = mail.fetch(e_id, '(RFC822)')
+                    if res != 'OK':
+                        continue
+                        
+                    for response_part in msg_data:
+                        if isinstance(response_part, tuple):
+                            msg = email.message_from_bytes(response_part[1])
+                            
+                            # Pegar Assunto
+                            subject, encoding = decode_header(msg["Subject"])[0]
+                            if isinstance(subject, bytes):
+                                subject = subject.decode(encoding if encoding else "utf-8", errors='ignore')
+                            
+                            # Verificar se é da GGMax
+                            sender = msg.get("From", "")
+                            if "ggmax" not in sender.lower() and "ggmax" not in subject.lower():
+                                continue
+                                
+                            # Pegar o corpo do email
+                            body = ""
+                            if msg.is_multipart():
+                                for part in msg.walk():
+                                    if part.get_content_type() == "text/plain":
+                                        try:
+                                            body += part.get_payload(decode=True).decode("utf-8", errors='ignore')
+                                        except:
+                                            pass
+                                    elif part.get_content_type() == "text/html":
+                                        try:
+                                            body += part.get_payload(decode=True).decode("utf-8", errors='ignore')
+                                        except:
+                                            pass
+                            else:
+                                try:
+                                    body = msg.get_payload(decode=True).decode("utf-8", errors='ignore')
+                                except:
+                                    body = msg.get_payload()
+
+                            # Extração por Regex (Genérico)
+                            # Pedido
+                            order_match = re.search(r'(?:Pedido|Order|Transação)[\s:#]*(GG[\d\-A-Z]+|\d+)', body, re.IGNORECASE)
+                            if not order_match:
+                                # Tentar achar no assunto
+                                order_match = re.search(r'#(\d+)', subject)
+                            order_id = order_match.group(1).strip() if order_match else None
+                            
+                            if not order_id:
+                                continue # Não é um email de venda válido
+                                
+                            # Checar se já existe
+                            cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
+                            if cursor.fetchone():
+                                skipped += 1
+                                continue
+                                
+                            # Produto
+                            product_match = re.search(r'(?:Produto|Item)[\s:#]*(.+?)(?:\r|\n|<br)', body, re.IGNORECASE)
+                            product_name = product_match.group(1).strip() if product_match else "Produto GGMax"
+                            
+                            # Remover tags HTML do nome do produto se tiver
+                            product_name = re.sub(r'<[^>]+>', '', product_name)
+                            
+                            # Comprador
+                            buyer_email = "Cliente GGMax"
+                            email_match = re.search(r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', body)
+                            if email_match and "ggmax" not in email_match.group(1).lower():
+                                buyer_email = email_match.group(1)
+                                
+                            # Duração
+                            duration_days = extract_duration_from_text(product_name + " " + body) or 30
+                            
+                            # Data
+                            sale_date = datetime.datetime.now()
+                            expiration_date = sale_date + datetime.timedelta(days=duration_days)
+                            account_details = f"Importado automaticamente via E-mail (GGMax).\nPedido: {order_id}"
+                            
+                            cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status, duration_days, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                                (order_id, product_name, account_details, buyer_email, sale_date.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), 'active', duration_days, 'ggmax'))
+                            imported += 1
+                except Exception as ex_mail:
+                    print(f"Erro ao processar email: {ex_mail}")
+                    
             conn.commit()
             conn.close()
             
-            if len(rows) < 100:
-                break
-            page += 1
-            
+        mail.close()
+        mail.logout()
+        
     except Exception as e:
         errors.append(str(e))
-        print("Erro ao importar GGSel:", e)
-    
+        print("Erro no IMAP GGMax:", e)
+        return jsonify({"error": f"Falha na conexão de email: {str(e)}"}), 500
+        
     return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors})
 
 # === VERIFICAÇÃO DE REFUNDS ===

@@ -44,7 +44,9 @@
                     <button class="tab" data-filter="refunded">Reembolsados</button>
                 </div>
                 <div class="actions">
-                    <button class="btn btn-import" id="import-btn">📥 Importar Vendas</button>
+                    <button class="btn btn-import" id="import-btn">📥 Importar Digiseller</button>
+                    <button class="btn btn-import" id="import-ggmax-email-btn" style="background: linear-gradient(135deg, #eab308, #ca8a04);">📧 Sincronizar E-mails GGMax</button>
+                    <button class="btn btn-add-ggmax" id="add-ggmax-btn">➕ Adicionar GGMax Manual</button>
                     <button class="btn btn-check-refund" id="check-refund-btn">🔍 Checar Refunds</button>
                     <button class="btn btn-refresh" id="refresh-btn">⟳ Atualizar</button>
                 </div>
@@ -52,16 +54,27 @@
 
             <div class="table-container">
                 <table class="sales-table">
+                    <colgroup>
+                        <col style="width: 9%">
+                        <col style="width: 18%">
+                        <col style="width: 8%">
+                        <col style="width: 16%">
+                        <col style="width: 6%">
+                        <col style="width: 9%">
+                        <col style="width: 9%">
+                        <col style="width: 10%">
+                        <col style="width: 15%">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>Pedido</th>
                             <th>Produto</th>
                             <th>Origem</th>
-                            <th>Email do Cliente</th>
-                            <th>Duração</th>
-                            <th>Data Venda</th>
-                            <th>Expira Em</th>
-                            <th>Status Expiração</th>
+                            <th>Email</th>
+                            <th>Dias</th>
+                            <th>Venda</th>
+                            <th>Expira</th>
+                            <th>Status</th>
                             <th>Ação</th>
                         </tr>
                     </thead>
@@ -87,6 +100,37 @@
             </div>
             <div class="modal-actions">
                 <button class="btn btn-close" id="modal-close">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add GGMax -->
+    <div class="modal-overlay hidden" id="ggmax-modal">
+        <div class="modal-content">
+            <h2>Adicionar Venda GGMax</h2>
+            <div class="modal-body">
+                <form id="ggmax-form">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">ID do Pedido</label>
+                        <input type="text" id="ggmax-order-id" required style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Produto</label>
+                        <input type="text" id="ggmax-product" required style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 4px;" placeholder="Ex: ChatGPT Plus - 30 dias">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Email do Cliente</label>
+                        <input type="email" id="ggmax-email" required style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Duração (Dias)</label>
+                        <input type="number" id="ggmax-duration" required style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; border-radius: 4px;" value="30">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-close" id="ggmax-close" style="margin-right: 1rem; background: transparent; border: 1px solid var(--border);">Cancelar</button>
+                <button class="btn btn-add-ggmax" id="ggmax-submit">Salvar Venda</button>
             </div>
         </div>
     </div>
