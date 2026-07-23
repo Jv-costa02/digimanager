@@ -43,8 +43,44 @@ def get_digiseller_token():
         print("Erro ao gerar token:", e)
     return None
 
-@app.route('/api/webhook/digiseller', methods=['POST'])
 @app.route('/api/webhook/ggsel', methods=['POST'])
+def ggsel_webhook():
+    data = request.json if request.is_json else request.form.to_dict()
+    order_id = data.get('order_id') or data.get('id_order') or data.get('inv_id')
+    
+    if not order_id:
+        if 'TESTE' in str(data):
+            order_id = 'TESTE-' + str(int(time.time()))
+        else:
+            return jsonify({"error": "No order_id provided"}), 400
+            
+    product_name = data.get('product_name') or data.get('name_goods') or 'Produto Desconhecido (GGSel)'
+    buyer_email = data.get('buyer_email') or data.get('email') or 'N/A'
+    account_details = data.get('account_details') or data.get('goods_content') or str(data)
+
+    days_to_expire = 7
+    combined_info = (product_name + " " + account_details).lower()
+    if '1 mes' in combined_info or '30 dias' in combined_info:
+        days_to_expire = 30
+    elif '15 dias' in combined_info:
+        days_to_expire = 15
+        
+    now = datetime.datetime.now()
+    expiration_date = now + datetime.timedelta(days=days_to_expire)
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
+    if cursor.fetchone():
+        conn.close()
+        return jsonify({"status": "ignored", "message": "Sale already exists"}), 200
+        
+    cursor.execute('INSERT INTO sales (order_id, product_name, account_details, buyer_email, sale_date, expiration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)', (order_id, product_name, account_details, buyer_email, now.strftime('%Y-%m-%d %H:%M:%S'), expiration_date.strftime('%Y-%m-%d %H:%M:%S'), 'active'))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "message": "GGSel sale recorded"}), 200
+
+@app.route('/api/webhook/digiseller', methods=['POST'])
 def digiseller_webhook():
     data = request.json if request.is_json else request.form.to_dict()
     order_id = data.get('order_id') or data.get('id_order') or data.get('inv_id')
