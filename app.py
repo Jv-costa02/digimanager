@@ -6,7 +6,7 @@ import hashlib
 import time
 import requests
 import json
-from database import init_db, get_db, extract_duration_from_name
+from database import init_db, get_db, extract_duration_from_sale
 
 app = Flask(__name__)
 init_db()
@@ -331,7 +331,8 @@ def import_digiseller():
                     except:
                         sale_date = datetime.datetime.now()
                 
-                duration_days = extract_duration_from_name(product_name)
+                duration_days = extract_duration_from_sale(sale, product_name)
+                print(f"[IMPORT DIGI] Venda {order_id}: produto='{product_name}', duração={duration_days} dias")
                 expiration_date = sale_date + datetime.timedelta(days=duration_days)
                 account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
@@ -387,13 +388,18 @@ def import_ggsel():
                 "rows": 100
             }
             resp = requests.post(url, json=payload, headers={"Content-Type": "application/json", "Accept": "application/json"})
+            print(f"[IMPORT GGSEL] Status: {resp.status_code}")
             if resp.status_code != 200:
+                print(f"[IMPORT GGSEL] Erro: {resp.text[:500]}")
                 errors.append(f"API GGSel retornou status {resp.status_code} na página {page}")
                 break
                 
             data = resp.json()
-            rows = data.get('rows', [])
-            if not rows:
+            print(f"[IMPORT GGSEL] Chaves: {list(data.keys())}")
+            print(f"[IMPORT GGSEL] Resposta (500 chars): {str(data)[:500]}")
+            rows = data.get('rows', data.get('sells', data.get('sales', data.get('list', []))))
+            print(f"[IMPORT GGSEL] Total vendas: {len(rows) if isinstance(rows, list) else 'NAO E LISTA'}")
+            if not rows or not isinstance(rows, list):
                 break
             
             conn = get_db()
@@ -420,7 +426,8 @@ def import_ggsel():
                     except:
                         sale_date = datetime.datetime.now()
                 
-                duration_days = extract_duration_from_name(product_name)
+                duration_days = extract_duration_from_sale(sale, product_name)
+                print(f"[IMPORT GGSEL] Venda {order_id}: produto='{product_name}', duração={duration_days} dias")
                 expiration_date = sale_date + datetime.timedelta(days=duration_days)
                 account_details = f"Importado da GGSel.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
