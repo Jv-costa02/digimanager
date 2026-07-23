@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${statusBadge}</td>
                     <td>
                         <button class="btn btn-details" onclick="showDetails('${encodeURIComponent(sale.account_details)}')">Ver Dados</button>
-                        ${sale.status !== 'revoked' ? `<button class="btn-action btn-retirar" onclick="marcarRetirada(${sale.id})">Marcar Retirada</button>` : ''}
-                        <button class="btn-action" onclick="deletarVenda(${sale.id})" style="background: #ef4444; margin-top: 5px;">Excluir</button>
+                        ${sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id})" style="background: #ca8a04; margin-top: 5px;">Retirar</button>` : ''}
+                        <button class="btn btn-revoke" onclick="deletarVenda(${sale.id})" style="background: #ef4444; margin-top: 5px;">Excluir</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
