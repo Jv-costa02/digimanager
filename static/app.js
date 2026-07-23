@@ -123,7 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${statusBadge}</td>
                     <td>
                         <button class="btn btn-details" onclick="showDetails('${encodeURIComponent(sale.account_details)}')">Ver Dados</button>
-                        ${sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="revokeSale(${sale.id})">Marcar Retirada</button>` : ''}
+                        ${sale.status !== 'revoked' ? `<button class="btn-action btn-retirar" onclick="marcarRetirada(${sale.id})">Marcar Retirada</button>` : ''}
+                        <button class="btn-action" onclick="deletarVenda(${sale.id})" style="background: #ef4444; margin-top: 5px;">Excluir</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
@@ -145,21 +146,33 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('hidden');
     };
 
-    window.revokeSale = async (id) => {
-        if (!confirm('Tem certeza que deseja marcar esta conta como revogada? Ela sairá da lista de pendências.')) return;
+    window.marcarRetirada = async (id) => {
+        if (!confirm('Tem certeza que deseja marcar esta conta como revogada?')) return;
         
         try {
-            const res = await fetch(`/api/sales/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'revoked' })
-            });
+            const res = await fetch(`/api/sales/${id}/retirar`, { method: 'POST' });
             if (res.ok) {
                 loadSales();
+            } else {
+                alert('Erro ao marcar retirada');
             }
         } catch (e) {
             console.error(e);
-            alert('Erro ao atualizar status');
+        }
+    };
+
+    window.deletarVenda = async (id) => {
+        if(confirm('Tem certeza que deseja APAGAR permanentemente esta venda?')) {
+            try {
+                const res = await fetch(`/api/sales/${id}/delete`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadSales();
+                } else {
+                    alert('Erro ao apagar venda');
+                }
+            } catch(e) {
+                console.error(e);
+            }
         }
     };
 

@@ -270,6 +270,18 @@ def clear_all():
     conn.close()
     return jsonify({"status": "success", "message": "All data cleared"})
 
+@app.route('/api/sales/<int:sale_id>/delete', methods=['DELETE'])
+def delete_sale(sale_id):
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM sales WHERE id = ?', (sale_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # === IMPORTAÇÃO DE VENDAS ANTIGAS ===
 
 @app.route('/api/import/digiseller', methods=['POST'])
@@ -432,11 +444,11 @@ def import_ggmax_discord_sync():
                 for field in embed.get('fields', []):
                     full_text += f" {field.get('name', '')} {field.get('value', '')}"
                     
+            if len(debug_info) < 3:
+                debug_info.append({"subject": f"Discord Type: {msg.get('type')}", "body": json.dumps(msg, ensure_ascii=False)[:1000]})
+                
             if not full_text.strip():
                 continue
-                
-            if len(debug_info) < 3:
-                debug_info.append({"subject": "Discord Message", "body": full_text[:500]})
                 
             # Regex para Pedido
             order_match = re.search(r'#([A-Z0-9]{6,12})', full_text)
