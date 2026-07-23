@@ -160,4 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Init
     loadSales();
+    
+    // Auto-refresh a cada 15 segundos
+    setInterval(loadSales, 15000);
 });
