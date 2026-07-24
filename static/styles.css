@@ -166,6 +166,8 @@ body {
 select option {
     background-color: var(--bg-card, #1f2937);
     color: white;
+}
+
 .btn:hover {
     background: var(--accent-hover);
 }
@@ -212,7 +214,7 @@ select option {
     margin: 0 4px;
 }
 
-.btn-import {
+.btn-revoke {
     background: var(--danger);
     font-size: 0.7rem;
     padding: 0.3rem 0.5rem;
