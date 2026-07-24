@@ -47,9 +47,10 @@ def get_digiseller_token():
         print("Erro ao gerar token:", e)
     return None
 
-def is_shared_account(product_name):
-    name_lower = str(product_name).lower()
-    keywords = ['shared', 'compartilhado', 'общий', 'общем', 'общая']
+def is_shared_account(text_to_check):
+    name_lower = str(text_to_check).lower()
+    # Apenas 'общий' (shared em russo) para evitar falsos positivos com 'em geral' etc.
+    keywords = ['shared', 'compartilhado', 'общий']
     return any(kw in name_lower for kw in keywords)
 
 def get_ggsel_token():
@@ -125,8 +126,8 @@ def ggsel_webhook():
                     return jsonify({"error": f"Invoice not paid. State: {state}"}), 400
                 
                 product_name = content.get('name') or data.get('product_name') or f"GGSel Produto (ID: {content.get('item_id')})"
-                account_details = f"WEBHOOK:\n{str(data)}\n\nAPI_INFO:\n{json.dumps(p_info, ensure_ascii=False)}"
-                if is_shared_account(product_name + " " + account_details):
+                options_str = json.dumps(p_info.get('options', []), ensure_ascii=False)
+                if is_shared_account(product_name + " " + options_str):
                     return jsonify({"status": "ignored", "message": "Shared account ignored"}), 200
                 buyer_email = data.get('email') or 'N/A'
             else:
@@ -138,9 +139,9 @@ def ggsel_webhook():
         # MODO DE COMPATIBILIDADE (Fallback) GGSel
         product_id = data.get('ID_D') or data.get('id_d') or 'Desconhecido'
         product_name = data.get('product_name') or data.get('name_goods') or f"GGSel Produto (ID: {product_id})"
-        account_details = data.get('account_details') or data.get('goods_content') or f"Venda processada pela GGSel. Detalhes indisponíveis no Webhook."
-        if is_shared_account(product_name + " " + account_details + " " + str(data)):
+        if is_shared_account(product_name):
             return jsonify({"status": "ignored", "message": "Shared account ignored"}), 200
+        account_details = data.get('account_details') or data.get('goods_content') or f"Venda processada pela GGSel. Detalhes indisponíveis no Webhook."
         buyer_email = data.get('email') or data.get('buyer_email') or 'N/A'
 
     days_to_expire = 7
@@ -214,7 +215,7 @@ def digiseller_webhook():
                     account_details = f"WEBHOOK:\n{str(data)}\n\nAPI_INFO:\n{json.dumps(p_info, ensure_ascii=False)}"
                     
                 options_str = json.dumps(p_info.get('options', []), ensure_ascii=False)
-                if is_shared_account(product_name + " " + account_details + " " + options_str + " " + str(data)):
+                if is_shared_account(product_name + " " + options_str):
                     return jsonify({"status": "ignored", "message": "Shared account ignored"}), 200
             else:
                 return jsonify({"error": "API request failed"}), 500
@@ -224,9 +225,9 @@ def digiseller_webhook():
     else:
         # MODO DE COMPATIBILIDADE (Fallback)
         product_name = data.get('product_name') or data.get('name_goods') or 'Produto Desconhecido'
-        account_details = data.get('account_details') or data.get('goods_content') or str(data)
-        if is_shared_account(product_name + " " + account_details):
+        if is_shared_account(product_name):
             return jsonify({"status": "ignored", "message": "Shared account ignored"}), 200
+        account_details = data.get('account_details') or data.get('goods_content') or str(data)
         buyer_email = data.get('buyer_email') or data.get('email') or 'N/A'
 
     days_to_expire = 7
@@ -396,7 +397,7 @@ def import_digiseller():
                     account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
                 options_str = json.dumps(sale.get('options', []), ensure_ascii=False)
-                if is_shared_account(product_name + " " + account_details + " " + options_str):
+                if is_shared_account(product_name + " " + options_str):
                     print(f"[IMPORT DIGI] Venda {order_id} ignorada (CONTA COMPARTILHADA via Opções)")
                     skipped += 1
                     continue
@@ -516,7 +517,7 @@ def import_ggmax_discord_sync():
             # Se sobrou algum colchete perdido do link, limpa
             product_name = product_name.replace('](', ' ').replace('[', '')
             
-            if is_shared_account(product_name + " " + full_text):
+            if is_shared_account(product_name):
                 skipped += 1
                 continue
             
