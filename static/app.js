@@ -172,37 +172,55 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let details = decodeURIComponent(encodedDetails);
         
+        // Remove barras invertidas caso venham do JSON
+        let cleanDetails = details.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+        
         // --- Filtro Inteligente de Credenciais ---
         let htmlContent = '';
         
-        // Verifica se é Outlook
-        if (details.includes('E-mail GPT') || details.includes('Пароль')) {
-            const emailMatch = details.match(/(?:E-mail GPT\/outlook|E-mail)[^\:]*:\s*([^\s\\]+)/i);
-            const passMatch = details.match(/Пароль[^\:]*:\s*([^\s\\]+)/i);
-            const linkMatch = details.match(/(?:Ссылка|Link)[^\:]*:\s*(https?:\/\/[^\s\\]+)/i);
+        let emailMatch = cleanDetails.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        let passMatch = cleanDetails.match(/(?:Пароль|Password|Senha)[^\:]*:\s*([^\s\n\r\\]+)/i);
+        let linkMatch = cleanDetails.match(/https?:\/\/[^\s\n\r<>"'\\]+/);
+        
+        // Tentar formato email:senha
+        let comboMatch = cleanDetails.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}):([^\s\n\r\\]+)/);
+        
+        if (comboMatch && !passMatch) {
+            emailMatch = [comboMatch[1]];
+            passMatch = [null, comboMatch[2]];
+        }
+        
+        if (emailMatch) {
+            let email = emailMatch[0];
+            let isGmail = email.toLowerCase().includes('@gmail.com');
             
-            if (emailMatch && passMatch) {
+            if (isGmail && linkMatch) {
                 htmlContent = `
-                    <div class="smart-card outlook-card">
-                        <h3>🔑 Credenciais Outlook</h3>
-                        <p><strong>Email:</strong> <code>${emailMatch[1]}</code></p>
-                        <p><strong>Senha:</strong> <code>${passMatch[1]}</code></p>
+                    <div class="smart-card google-card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #10b981; font-size: 1.1rem;">🔑 Credenciais Google</h3>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> <code style="background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 4px;">${email}</code></p>
+                        <p style="margin: 5px 0;"><strong>Painel (Link):</strong> <a href="${linkMatch[0]}" target="_blank" style="color: #3b82f6; text-decoration: none;">Acessar Painel ↗️</a></p>
                     </div>
                 `;
-            } else if (emailMatch && linkMatch) {
-                // Caso Google (Email + Painel)
+            } else if (passMatch) {
                 htmlContent = `
-                    <div class="smart-card google-card">
-                        <h3>🔑 Credenciais Google</h3>
-                        <p><strong>Email:</strong> <code>${emailMatch[1]}</code></p>
-                        <p><strong>Painel (Link):</strong> <a href="${linkMatch[1]}" target="_blank">${linkMatch[1]}</a></p>
+                    <div class="smart-card outlook-card" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #3b82f6; font-size: 1.1rem;">🔑 Credenciais Outlook</h3>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> <code style="background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 4px;">${email}</code></p>
+                        <p style="margin: 5px 0;"><strong>Senha:</strong> <code style="background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 4px;">${passMatch[1]}</code></p>
                     </div>
                 `;
             }
         }
         
         if (htmlContent !== '') {
-            htmlContent += `<hr style="margin:15px 0; border-color: rgba(255,255,255,0.1);"><p style="font-size: 0.8rem; color: #888;">Texto original:</p><pre style="white-space: pre-wrap; font-size: 0.75rem;">${details}</pre>`;
+            // Ocultar detalhes longos num elemento expansível opcional, caso o usuário ainda queira ver
+            htmlContent += `
+                <details style="margin-top: 15px; font-size: 0.85rem; color: #aaa;">
+                    <summary style="cursor: pointer; opacity: 0.7;">Ver conteúdo original bruto</summary>
+                    <pre style="white-space: pre-wrap; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px;">${details}</pre>
+                </details>
+            `;
             modalDetails.innerHTML = htmlContent;
         } else {
             // Fallback JSON/Texto Original
