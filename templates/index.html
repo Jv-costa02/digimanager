@@ -44,6 +44,13 @@
                     <button class="tab" data-filter="refunded">Reembolsados</button>
                 </div>
                 <div class="actions">
+                    <select id="period-filter" class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: var(--text);">
+                        <option value="all">Todo o período</option>
+                        <option value="7">Últimos 7 dias</option>
+                        <option value="15">Últimos 15 dias</option>
+                        <option value="30">Últimos 30 dias</option>
+                    </select>
+                    
                     <button class="btn btn-import" id="import-btn">📥 Importar Digiseller</button>
                     <button class="btn btn-import" id="import-ggmax-discord-btn" style="background: linear-gradient(135deg, #eab308, #ca8a04);">👾 Sincronizar Discord GGMax</button>
                     <button class="btn btn-add-ggmax" id="add-ggmax-btn">➕ Adicionar GGMax Manual</button>

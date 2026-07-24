@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const importBtn = document.getElementById('import-btn');
     const checkRefundBtn = document.getElementById('check-refund-btn');
     const tabs = document.querySelectorAll('.tab');
+    const periodFilter = document.getElementById('period-filter');
 
     // Stats elements
     const countActive = document.getElementById('count-active');
@@ -77,19 +78,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTable() {
         tableBody.innerHTML = '';
+        let periodDays = periodFilter.value;
+        const now = new Date();
         
-        let filteredSales = allSales;
-        if (currentFilter === 'active') {
-            filteredSales = allSales.filter(s => s.uiStatus === 'active');
-        } else if (currentFilter === 'expiring_today') {
-            filteredSales = allSales.filter(s => s.uiStatus === 'warning');
-        } else if (currentFilter === 'expired') {
-            filteredSales = allSales.filter(s => s.uiStatus === 'danger');
-        } else if (currentFilter === 'revoked') {
-            filteredSales = allSales.filter(s => s.uiStatus === 'revoked');
-        } else if (currentFilter === 'refunded') {
-            filteredSales = allSales.filter(s => s.uiStatus === 'refunded');
-        }
+        let filteredSales = allSales.filter(sale => {
+            // Filtro por período
+            if (periodDays !== 'all') {
+                const saleDate = new Date(sale.sale_date);
+                const diffTime = now - saleDate;
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                if (diffDays > parseInt(periodDays)) {
+                    return false; // Fora do período
+                }
+            }
+
+            // Filtro por tab
+            if (currentFilter === 'active') return sale.uiStatus === 'active';
+            if (currentFilter === 'expiring_today') return sale.uiStatus === 'warning';
+            if (currentFilter === 'expired') return sale.uiStatus === 'danger';
+            if (currentFilter === 'revoked') return sale.uiStatus === 'revoked';
+            if (currentFilter === 'refunded') return sale.uiStatus === 'refunded';
+            return true;
+        });
 
         if (filteredSales.length === 0) {
             emptyState.classList.remove('hidden');
@@ -122,32 +132,80 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${new Date(sale.expiration_date).toLocaleDateString()}</td>
                     <td>${statusBadge}</td>
                     <td>
-                        <button class="btn btn-details" onclick="showDetails('${encodeURIComponent(sale.account_details)}')">Ver Dados</button>
-                        <button class="btn btn-details" onclick="editarData(${sale.id}, '${sale.sale_date.split(' ')[0]}')" title="Editar Data de Compra">✏️</button>
-                        ${sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id})" style="background: #ca8a04; margin-top: 5px;">Retirar</button>` : ''}
-                        <button class="btn btn-revoke" onclick="deletarVenda(${sale.id})" style="background: #ef4444; margin-top: 5px;">Excluir</button>
+                        <button class="btn btn-details" onclick="showDetails('${encodeURIComponent(sale.account_details)}', event)">Ver Dados</button>
+                        <button class="btn btn-details" onclick="editarData(${sale.id}, '${sale.sale_date.split(' ')[0]}', event)" title="Editar Data de Compra">✏️</button>
+                        ${sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event)" style="background: #ca8a04; margin-top: 5px;">Retirar</button>` : ''}
+                        <button class="btn btn-revoke" onclick="deletarVenda(${sale.id}, event)" style="background: #ef4444; margin-top: 5px;">Excluir</button>
                     </td>
                 `;
+                
+                // Sistema de Seleção de Linha
+                tr.addEventListener('click', (e) => {
+                    // Remove seleção de todas as outras linhas
+                    document.querySelectorAll('#table-body tr').forEach(row => row.classList.remove('selected-row'));
+                    // Adiciona na atual
+                    tr.classList.add('selected-row');
+                    e.stopPropagation();
+                });
+                
                 tableBody.appendChild(tr);
             });
         }
     }
 
-    window.showDetails = (encodedDetails) => {
-        const details = decodeURIComponent(encodedDetails);
+    window.showDetails = (encodedDetails, event) => {
+        if(event) event.stopPropagation();
         
-        // Tentativa de formatar JSON se for string json
-        try {
-            const parsed = JSON.parse(details.replace(/'/g, '"'));
-            modalDetails.textContent = JSON.stringify(parsed, null, 2);
-        } catch(e) {
-            modalDetails.textContent = details;
+        let details = decodeURIComponent(encodedDetails);
+        
+        // --- Filtro Inteligente de Credenciais ---
+        let htmlContent = '';
+        
+        // Verifica se é Outlook
+        if (details.includes('E-mail GPT') || details.includes('Пароль')) {
+            const emailMatch = details.match(/(?:E-mail GPT\/outlook|E-mail)[^\:]*:\s*([^\s\\]+)/i);
+            const passMatch = details.match(/Пароль[^\:]*:\s*([^\s\\]+)/i);
+            const linkMatch = details.match(/(?:Ссылка|Link)[^\:]*:\s*(https?:\/\/[^\s\\]+)/i);
+            
+            if (emailMatch && passMatch) {
+                htmlContent = `
+                    <div class="smart-card outlook-card">
+                        <h3>🔑 Credenciais Outlook</h3>
+                        <p><strong>Email:</strong> <code>${emailMatch[1]}</code></p>
+                        <p><strong>Senha:</strong> <code>${passMatch[1]}</code></p>
+                    </div>
+                `;
+            } else if (emailMatch && linkMatch) {
+                // Caso Google (Email + Painel)
+                htmlContent = `
+                    <div class="smart-card google-card">
+                        <h3>🔑 Credenciais Google</h3>
+                        <p><strong>Email:</strong> <code>${emailMatch[1]}</code></p>
+                        <p><strong>Painel (Link):</strong> <a href="${linkMatch[1]}" target="_blank">${linkMatch[1]}</a></p>
+                    </div>
+                `;
+            }
         }
+        
+        if (htmlContent !== '') {
+            htmlContent += `<hr style="margin:15px 0; border-color: rgba(255,255,255,0.1);"><p style="font-size: 0.8rem; color: #888;">Texto original:</p><pre style="white-space: pre-wrap; font-size: 0.75rem;">${details}</pre>`;
+            modalDetails.innerHTML = htmlContent;
+        } else {
+            // Fallback JSON/Texto Original
+            try {
+                const parsed = JSON.parse(details.replace(/'/g, '"'));
+                modalDetails.innerHTML = `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+            } catch(e) {
+                modalDetails.innerHTML = `<pre style="white-space: pre-wrap;">${details}</pre>`;
+            }
+        }
+        // -----------------------------------------
         
         modal.classList.remove('hidden');
     };
 
-    window.marcarRetirada = async (id) => {
+    window.marcarRetirada = async (id, event) => {
+        if(event) event.stopPropagation();
         if (!confirm('Tem certeza que deseja marcar esta conta como revogada?')) return;
         
         try {
@@ -161,8 +219,30 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(e);
         }
     };
+    
+    window.editarData = async (id, dataAtual, event) => {
+        if(event) event.stopPropagation();
+        const novaData = prompt('Digite a data real da venda no formato AAAA-MM-DD (Exemplo: 2026-05-15):', dataAtual);
+        if (novaData) {
+            try {
+                const res = await fetch(`/api/sales/${id}/editar-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sale_date: novaData })
+                });
+                if (res.ok) {
+                    loadSales();
+                } else {
+                    alert('Erro ao atualizar data');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    };
 
-    window.deletarVenda = async (id) => {
+    window.deletarVenda = async (id, event) => {
+        if(event) event.stopPropagation();
         if(confirm('Tem certeza que deseja APAGAR permanentemente esta venda?')) {
             try {
                 const res = await fetch(`/api/sales/${id}/delete`, { method: 'DELETE' });
@@ -325,6 +405,18 @@ document.addEventListener('DOMContentLoaded', () => {
             currentFilter = e.target.dataset.filter;
             renderTable();
         });
+    });
+
+    // Desselecionar ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('tr')) {
+            document.querySelectorAll('#table-body tr').forEach(row => row.classList.remove('selected-row'));
+        }
+    });
+
+    // Evento de mudança de período
+    periodFilter.addEventListener('change', () => {
+        renderTable();
     });
 
     // Init
