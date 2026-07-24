@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Filtro por tab
-            if (currentFilter === 'active') return sale.uiStatus === 'active';
+            if (currentFilter === 'active') return sale.uiStatus === 'active' || sale.uiStatus === 'warning';
             if (currentFilter === 'expiring_today') return sale.uiStatus === 'warning';
             if (currentFilter === 'expired') return sale.uiStatus === 'danger';
             if (currentFilter === 'revoked') return sale.uiStatus === 'revoked';
