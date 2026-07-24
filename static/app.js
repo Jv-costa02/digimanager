@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const importBtn = document.getElementById('import-btn');
     const checkRefundBtn = document.getElementById('check-refund-btn');
     const tabs = document.querySelectorAll('.tab');
+    const durationFilter = document.getElementById('duration-filter');
     const periodFilter = document.getElementById('period-filter');
 
     // Stats elements
@@ -78,11 +79,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTable() {
         tableBody.innerHTML = '';
+        let durationDays = durationFilter.value;
         let periodDays = periodFilter.value;
         const now = new Date();
         
         let filteredSales = allSales.filter(sale => {
-            // Filtro por período
+            // Filtro por duração da conta (7, 15, 30)
+            if (durationDays !== 'all') {
+                const duration = sale.duration_days || 7;
+                if (duration !== parseInt(durationDays)) {
+                    return false; // Não tem essa duração
+                }
+            }
+
+            // Filtro por período de venda
             if (periodDays !== 'all') {
                 const saleDate = new Date(sale.sale_date);
                 const diffTime = now - saleDate;
@@ -414,7 +424,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Evento de mudança de período
+    // Evento de mudança nos filtros
+    durationFilter.addEventListener('change', () => {
+        renderTable();
+    });
+
     periodFilter.addEventListener('change', () => {
         renderTable();
     });
