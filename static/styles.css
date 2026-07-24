@@ -163,6 +163,11 @@ body {
     transition: background 0.2s;
 }
 
+select option {
+    background-color: var(--bg-card, #1f2937);
+    color: white;
+}
+
 .btn:hover {
     background: var(--accent-hover);
 }
