@@ -53,9 +53,7 @@ body {
 
 .logo-icon {
     font-size: 2rem;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.4));
 }
 
 .logo h1 {
