@@ -198,7 +198,11 @@ def digiseller_webhook():
                 buyer_email = p_info.get('email') or data.get('buyer_email') or data.get('email') or 'N/A'
                 
                 # Juntamos tudo para não perder nenhum dado de acesso (pois pode estar nos 'options' ou 'goods' da API)
-                account_details = f"WEBHOOK:\n{str(data)}\n\nAPI_INFO:\n{json.dumps(p_info, ensure_ascii=False)}"
+                entry = p_info.get('product_entry') or p_info.get('goods_content')
+                if entry:
+                    account_details = entry
+                else:
+                    account_details = f"WEBHOOK:\n{str(data)}\n\nAPI_INFO:\n{json.dumps(p_info, ensure_ascii=False)}"
             else:
                 return jsonify({"error": "API request failed"}), 500
         except Exception as e:
@@ -376,7 +380,12 @@ def import_digiseller():
                 
                 print(f"[IMPORT DIGI] Venda {order_id}: produto='{product_name}', duração FINAL={duration_days} dias")
                 expiration_date = sale_date + datetime.timedelta(days=duration_days)
-                account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
+                
+                entry = sale.get('product_entry') or sale.get('goods_content')
+                if entry:
+                    account_details = entry
+                else:
+                    account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
                 # Checar status do invoice
                 inv_state = sale.get('invoice_state', '') or sale.get('inv', {}).get('state', 3)
@@ -463,6 +472,10 @@ def import_ggmax_discord_sync():
             order_match = re.search(r'#([A-Z0-9]{6,12})', full_text)
             if not order_match:
                 order_match = re.search(r'Pedido:[\s<]*#?([A-Z0-9]+)', full_text, re.IGNORECASE)
+            if not order_match:
+                # Novo formato: **ID da Venda:** [62dzze3](...)
+                order_match = re.search(r'ID da Venda:\*\*.*?\[?([a-zA-Z0-9]+)\]?', full_text, re.IGNORECASE)
+                
             order_id = order_match.group(1).strip() if order_match else None
             
             if not order_id:
@@ -476,13 +489,24 @@ def import_ggmax_discord_sync():
             # Regex para Produto
             # GGMax discord webhook embed costuma ser: "1 x CHATGPT PLUS..."
             product_match = re.search(r'\d+\s*[xX]\s*([^\n\r]+)', full_text)
+            if not product_match:
+                # Novo formato: **Anúncio:** [Nome do produto...](...)
+                product_match = re.search(r'Anúncio:\*\*\s*(.+)', full_text, re.IGNORECASE)
+                
             product_name = product_match.group(1).strip() if product_match else "Produto GGMax"
             
             # Limpar formatação Markdown caso venha (**Produto**) e links [texto](url)
             product_name = product_name.replace('**', '').replace('__', '')
-            product_name = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', product_name)
+            # Tentar remover links no formato [texto](url)
+            product_name = re.sub(r'\[(.*?)\]\(https?://[^\)]+\)', r'\1', product_name)
+            # Se sobrou algum colchete perdido do link, limpa
+            product_name = product_name.replace('](', ' ').replace('[', '')
             
+            # Cliente
             buyer_email = "Cliente GGMax"
+            client_match = re.search(r'Cliente:\*\*\s*([^\n\r]+)', full_text, re.IGNORECASE)
+            if client_match:
+                buyer_email = client_match.group(1).strip()
             
             duration_days = extract_duration_from_text(full_text) or 30
             
