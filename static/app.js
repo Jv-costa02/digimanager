@@ -178,20 +178,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Filtro Inteligente de Credenciais ---
         let htmlContent = '';
         
+        // 1. Achar o email
         let emailMatch = cleanDetails.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        let passMatch = cleanDetails.match(/(?:Пароль|Password|Senha)[^\:]*:\s*([^\s\n\r\\]+)/i);
+        let email = emailMatch ? emailMatch[0] : null;
+        
+        // 2. Achar a senha (ignorando a senha se for igual ao e-mail, a menos que seja a única opção)
+        let passRegex = /(?:Пароль|Пapoль|Password|Senha|Pass|Pwd)[^\:]*:\s*([^\s\n\r\\]+)/gi;
+        let passMatch = null;
+        let match;
+        
+        while ((match = passRegex.exec(cleanDetails)) !== null) {
+            let extractedPass = match[1];
+            // Se a senha extraída NÃO for o email, preferimos essa!
+            if (!email || extractedPass.toLowerCase() !== email.toLowerCase()) {
+                passMatch = [match[0], extractedPass];
+                break;
+            }
+            // Se for igual, guardamos como fallback
+            if (!passMatch) passMatch = [match[0], extractedPass];
+        }
+        
         let linkMatch = cleanDetails.match(/https?:\/\/[^\s\n\r<>"'\\]+/);
         
         // Tentar formato email:senha
         let comboMatch = cleanDetails.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}):([^\s\n\r\\]+)/);
         
-        if (comboMatch && !passMatch) {
-            emailMatch = [comboMatch[1]];
+        if (comboMatch && (!passMatch || (passMatch[1].toLowerCase() === comboMatch[1].toLowerCase()))) {
+            email = comboMatch[1];
             passMatch = [null, comboMatch[2]];
         }
         
-        if (emailMatch) {
-            let email = emailMatch[0];
+        if (email) {
             let isGmail = email.toLowerCase().includes('@gmail.com');
             
             if (isGmail && linkMatch) {
