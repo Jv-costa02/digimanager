@@ -37,16 +37,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateStats() {
-        const now = new Date();
+        const today = new Date();
+        const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         
         allSales.forEach(sale => {
-            const expDate = new Date(sale.expiration_date);
-            const diffTime = expDate - now;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // Cria a data da string (vem do banco) e isola ano/mês/dia
+            const expParts = sale.expiration_date.split(/[- :]/);
+            let expDateOnly;
+            if (expParts.length >= 3) {
+                // Se for YYYY-MM-DD
+                expDateOnly = new Date(expParts[0], expParts[1] - 1, expParts[2]);
+            } else {
+                expDateOnly = new Date(sale.expiration_date);
+                expDateOnly = new Date(expDateOnly.getFullYear(), expDateOnly.getMonth(), expDateOnly.getDate());
+            }
+
+            const diffTime = expDateOnly - todayOnly;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             
             if (sale.status === 'revoked') {
                 sale.uiStatus = 'revoked';
-            } else if (diffDays <= 0) {
+            } else if (diffDays < 0) {
                 sale.uiStatus = 'danger';
             } else if (diffDays <= 3) {
                 sale.uiStatus = 'warning';
@@ -114,7 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (sale.uiStatus === 'revoked') statusBadge = '<span class="status-badge status-revoked">Acesso Retirado</span>';
                 else if (sale.uiStatus === 'refunded') statusBadge = '<span class="status-badge status-refunded">Reembolsado</span>';
                 else if (sale.uiStatus === 'danger') statusBadge = '<span class="status-badge status-danger">Expirada</span>';
-                else if (sale.uiStatus === 'warning') statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
+                else if (sale.uiStatus === 'warning') {
+                    if (sale.daysLeft === 0) statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
+                    else if (sale.daysLeft === 1) statusBadge = '<span class="status-badge status-warning">Expira Amanhã</span>';
+                    else statusBadge = `<span class="status-badge status-warning">Expira em ${sale.daysLeft} dias</span>`;
+                }
                 else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
 
                 const sourceBadge = (sale.source === 'ggsel' || sale.source === 'ggmax')
