@@ -6,16 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
     const refreshBtn = document.getElementById('refresh-btn');
     const importBtn = document.getElementById('import-btn');
-    const checkRefundBtn = document.getElementById('check-refund-btn');
     const tabs = document.querySelectorAll('.tab');
     const durationFilter = document.getElementById('duration-filter');
     const periodFilter = document.getElementById('period-filter');
 
     // Stats elements
     const countActive = document.getElementById('count-active');
-    const countWarning = document.getElementById('count-warning');
-    const countDanger = document.getElementById('count-danger');
-    const countRefunded = document.getElementById('count-refunded');
+    const countExpiring = document.getElementById('count-expiring');
+    const countExpired = document.getElementById('count-expired');
+    const countRevoked = document.getElementById('count-revoked');
 
     // Modal elements
     const modal = document.getElementById('modal');
@@ -27,34 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshBtn.textContent = 'Carregando...';
             const response = await fetch('/api/sales');
             allSales = await response.json();
-            
-            // Process data for UI
-            const now = new Date();
-            
-            allSales.forEach(sale => {
-                if (sale.status === 'revoked') {
-                    sale.uiStatus = 'revoked';
-                    return;
-                }
-                if (sale.status === 'refunded') {
-                    sale.uiStatus = 'refunded';
-                    return;
-                }
-
-                const expDate = new Date(sale.expiration_date);
-                const diffTime = expDate - now;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays <= 0) {
-                    sale.uiStatus = 'danger'; // Expirada
-                } else if (diffDays <= 1) {
-                    sale.uiStatus = 'warning'; // Expira hoje/amanhã
-                } else {
-                    sale.uiStatus = 'active'; // Ativa
-                }
-                sale.daysLeft = diffDays;
-            });
-
             updateStats();
             renderTable();
         } catch (error) {
@@ -66,15 +37,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateStats() {
+        const now = new Date();
+        
+        allSales.forEach(sale => {
+            const expDate = new Date(sale.expiration_date);
+            const diffTime = expDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (sale.status === 'revoked') {
+                sale.uiStatus = 'revoked';
+            } else if (diffDays <= 0) {
+                sale.uiStatus = 'danger';
+            } else if (diffDays <= 3) {
+                sale.uiStatus = 'warning';
+            } else {
+                sale.uiStatus = 'active';
+            }
+            sale.daysLeft = diffDays;
+        });
+
         const active = allSales.filter(s => s.uiStatus === 'active').length;
-        const warning = allSales.filter(s => s.uiStatus === 'warning').length;
-        const danger = allSales.filter(s => s.uiStatus === 'danger').length;
-        const refunded = allSales.filter(s => s.uiStatus === 'refunded').length;
+        const expiring = allSales.filter(s => s.uiStatus === 'warning').length;
+        const expired = allSales.filter(s => s.uiStatus === 'danger').length;
+        const revoked = allSales.filter(s => s.uiStatus === 'revoked').length;
 
         countActive.textContent = active;
-        countWarning.textContent = warning;
-        countDanger.textContent = danger;
-        countRefunded.textContent = refunded;
+        countExpiring.textContent = expiring;
+        countExpired.textContent = expired;
+        countRevoked.textContent = revoked;
     }
 
     function renderTable() {
@@ -107,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentFilter === 'expiring_today') return sale.uiStatus === 'warning';
             if (currentFilter === 'expired') return sale.uiStatus === 'danger';
             if (currentFilter === 'revoked') return sale.uiStatus === 'revoked';
-            if (currentFilter === 'refunded') return sale.uiStatus === 'refunded';
             return true;
         });
 

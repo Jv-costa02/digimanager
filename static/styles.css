@@ -166,13 +166,53 @@ body {
 select option {
     background-color: var(--bg-card, #1f2937);
     color: white;
-}
-
 .btn:hover {
     background: var(--accent-hover);
 }
 
-.btn-revoke {
+/* Filtros Estilizados */
+.filter-group {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 8px;
+    gap: 8px;
+}
+
+.filter-group label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-select {
+    background: transparent;
+    color: var(--text);
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.custom-select option {
+    background-color: var(--bg-card, #1f2937);
+    color: white;
+}
+
+.filter-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 4px;
+}
+
+.btn-import {
     background: var(--danger);
     font-size: 0.7rem;
     padding: 0.3rem 0.5rem;
