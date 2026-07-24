@@ -375,28 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ggmaxSubmit.disabled = false;
     });
 
-    // Checar refunds
-    checkRefundBtn.addEventListener('click', async () => {
-        checkRefundBtn.textContent = '⏳ Checando...';
-        checkRefundBtn.disabled = true;
-        
-        try {
-            const res = await fetch('/api/check-refunds', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                alert(`Verificação concluída!\n\n${data.checked} vendas verificadas.\n${data.refunded} reembolsos detectados.`);
-            } else {
-                alert(`Erro: ${data.error}`);
-            }
-        } catch(e) {
-            alert('Erro ao verificar refunds.');
-        }
-        
-        checkRefundBtn.textContent = '🔍 Checar Refunds';
-        checkRefundBtn.disabled = false;
-        loadSales();
-    });
-
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             tabs.forEach(t => t.classList.remove('active'));
