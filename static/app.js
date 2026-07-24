@@ -333,33 +333,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-refresh da tabela a cada 15 segundos
     setInterval(loadSales, 15000);
     
-    // Auto-sync do Discord GGMax a cada 5 minutos (silencioso)
+    // Auto-sync a cada 5 minutos (silencioso)
     setInterval(async () => {
         try {
             const res = await fetch('/api/import/ggmax-discord-sync', { method: 'POST' });
             if (res.ok) {
                 const data = await res.json();
-                if (data.imported > 0) {
-                    loadSales(); // recarrega a tabela se achou venda nova
-                }
+                if (data.imported > 0) loadSales();
             }
-        } catch(e) {
-            console.error("Erro no auto-sync do Discord:", e);
-        }
+        } catch(e) {}
     }, 300000);
 
-    // Auto-sync do Digiseller a cada 5 minutos (silencioso)
     setInterval(async () => {
         try {
             const res = await fetch('/api/import/digiseller', { method: 'POST' });
             if (res.ok) {
                 const data = await res.json();
-                if (data.imported > 0) {
-                    loadSales(); 
-                }
+                if (data.imported > 0) loadSales(); 
             }
-        } catch(e) {
-            console.error("Erro no auto-sync da Digiseller:", e);
-        }
+        } catch(e) {}
     }, 300000);
+
+    // Sync invisível ao abrir o site (roda 2 segundos após carregar)
+    setTimeout(async () => {
+        try {
+            const res = await fetch('/api/import/ggmax-discord-sync', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.imported > 0) loadSales();
+            }
+            const res2 = await fetch('/api/import/digiseller', { method: 'POST' });
+            if (res2.ok) {
+                const data = await res2.json();
+                if (data.imported > 0) loadSales();
+            }
+        } catch(e) {}
+    }, 2000);
 });
