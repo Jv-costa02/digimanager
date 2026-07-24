@@ -209,12 +209,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (email) {
-            let isGmail = email.toLowerCase().includes('@gmail.com');
+            let isGmail = email.toLowerCase().includes('@gmail.com') || email.toLowerCase().includes('@googlemail.com');
             
-            if (isGmail && linkMatch) {
+            // Se tem link e não tem senha (ou mesmo que tenha), e é acesso via painel
+            if (linkMatch && !passMatch) {
+                let cardTitle = isGmail ? "🔑 Credenciais Google" : "🔑 Credenciais de Acesso";
                 htmlContent = `
                     <div class="smart-card google-card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h3 style="margin-top: 0; color: #10b981; font-size: 1.1rem;">🔑 Credenciais Google</h3>
+                        <h3 style="margin-top: 0; color: #10b981; font-size: 1.1rem;">${cardTitle}</h3>
                         <p style="margin: 5px 0;"><strong>Email:</strong> <code style="background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 4px;">${email}</code></p>
                         <p style="margin: 5px 0;"><strong>Painel (Link):</strong> <a href="${linkMatch[0]}" target="_blank" style="color: #3b82f6; text-decoration: none;">Acessar Painel ↗️</a></p>
                     </div>
