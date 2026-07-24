@@ -1,7 +1,10 @@
 import sqlite3
 import re
 
-DB_NAME = 'sales.db'
+import os
+
+# Usa a variável de ambiente DB_PATH se existir (para o volume persistente do Railway), senão salva na raiz
+DB_NAME = os.environ.get('DB_PATH', 'sales.db')
 
 def get_db():
     conn = sqlite3.connect(DB_NAME)
