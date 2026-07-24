@@ -53,6 +53,22 @@ def is_shared_account(text_to_check):
     keywords = ['shared', 'compartilhado', 'общий']
     return any(kw in name_lower for kw in keywords)
 
+def find_options_in_json(obj):
+    """Busca recursivamente a chave 'options' em qualquer lugar do JSON"""
+    if isinstance(obj, dict):
+        if 'options' in obj and isinstance(obj['options'], (list, dict)):
+            return obj['options']
+        for v in obj.values():
+            res = find_options_in_json(v)
+            if res:
+                return res
+    elif isinstance(obj, list):
+        for item in obj:
+            res = find_options_in_json(item)
+            if res:
+                return res
+    return []
+
 def get_ggsel_token():
     api_key = os.environ.get('GGSEL_API_KEY')
     seller_id = os.environ.get('GGSEL_SELLER_ID')
@@ -376,12 +392,21 @@ def import_digiseller():
                     info_resp = requests.get(info_url, headers={"Accept": "application/json"})
                     if info_resp.status_code == 200:
                         info_data = info_resp.json()
-                        if 'options' in info_data:
-                            sale['options'] = info_data['options']
+                        
+                        # Extrair options de qualquer lugar do JSON
+                        found_opts = find_options_in_json(info_data)
+                        if found_opts:
+                            sale['options'] = found_opts
+                            
+                        # Tenta pegar itens comuns de conteúdo se existirem
                         if 'product_entry' in info_data and not sale.get('product_entry'):
                             sale['product_entry'] = info_data['product_entry']
                         if 'goods_content' in info_data and not sale.get('goods_content'):
                             sale['goods_content'] = info_data['goods_content']
+                        
+                        # Fallback agressivo para o conteúdo se não achou as chaves acima
+                        if not sale.get('product_entry') and not sale.get('goods_content'):
+                            sale['goods_content'] = json.dumps(info_data, ensure_ascii=False)
                 except Exception as e2:
                     print(f"[IMPORT DIGI] Erro purchase/info {order_id}: {e2}")
                 
@@ -397,8 +422,15 @@ def import_digiseller():
                     account_details = f"Importado da Digiseller.\n{json.dumps(sale, ensure_ascii=False, default=str)}"
                 
                 options_str = json.dumps(sale.get('options', []), ensure_ascii=False)
-                if is_shared_account(product_name + " " + options_str):
-                    print(f"[IMPORT DIGI] Venda {order_id} ignorada (CONTA COMPARTILHADA via Opções)")
+                
+                # Para ter CERTEZA absoluta que não perdemos 'ОБЩИЙ', verificamos também o nome do produto e as opções
+                # E como garantia máxima, se options_str estiver vazio, vasculhamos info_data bruto para achar a palavra
+                check_string = product_name + " " + options_str
+                if not sale.get('options') and 'info_data' in locals():
+                    check_string += " " + json.dumps(info_data, ensure_ascii=False)
+                    
+                if is_shared_account(check_string):
+                    print(f"[IMPORT DIGI] Venda {order_id} ignorada (CONTA COMPARTILHADA)")
                     skipped += 1
                     continue
                 
