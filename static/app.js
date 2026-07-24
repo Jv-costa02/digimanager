@@ -241,7 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('Tem certeza que deseja marcar esta conta como revogada?')) return;
         
         try {
-            const res = await fetch(`/api/sales/${id}/retirar`, { method: 'POST' });
+            const res = await fetch(`/api/sales/${id}/status`, { 
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'revoked' })
+            });
             if (res.ok) {
                 loadSales();
             } else {
