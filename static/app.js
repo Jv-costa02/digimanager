@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`/api/sales/${id}/delete`, { method: 'DELETE' });
                 if (res.ok) {
+                    window.fecharModal();
                     loadSales();
                 } else {
                     alert('Erro ao apagar venda');
