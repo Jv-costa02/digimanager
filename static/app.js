@@ -42,18 +42,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         allSales.forEach(sale => {
             // Cria a data da string (vem do banco) e isola ano/mês/dia
-            const expParts = sale.expiration_date.split(/[- :]/);
+            const expParts = (sale.expiration_date || '').split(/[- :T]/);
             let expDateOnly;
-            if (expParts.length >= 3) {
-                // Se for YYYY-MM-DD
+            let exactExpDate;
+            if (expParts.length >= 6) {
+                // Se tiver data e hora: YYYY-MM-DD HH:MM:SS
                 expDateOnly = new Date(expParts[0], expParts[1] - 1, expParts[2]);
+                exactExpDate = new Date(expParts[0], expParts[1] - 1, expParts[2], expParts[3], expParts[4], expParts[5]);
+            } else if (expParts.length >= 3) {
+                // Se for só YYYY-MM-DD
+                expDateOnly = new Date(expParts[0], expParts[1] - 1, expParts[2]);
+                exactExpDate = new Date(expParts[0], expParts[1] - 1, expParts[2], 23, 59, 59);
             } else {
                 expDateOnly = new Date(sale.expiration_date);
                 expDateOnly = new Date(expDateOnly.getFullYear(), expDateOnly.getMonth(), expDateOnly.getDate());
+                exactExpDate = new Date(sale.expiration_date);
             }
 
             const diffTime = expDateOnly - todayOnly;
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            const exactDiffMs = exactExpDate - today;
+            sale.exactHoursLeft = Math.floor(exactDiffMs / (1000 * 60 * 60));
+            sale.exactMinutesLeft = Math.floor(exactDiffMs / (1000 * 60));
             
             if (sale.status === 'revoked') {
                 sale.uiStatus = 'revoked';
@@ -132,13 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 let statusBadge = '';
                 if (sale.uiStatus === 'revoked') statusBadge = '<span class="status-badge status-revoked">Acesso Retirado</span>';
                 else if (sale.uiStatus === 'refunded') statusBadge = '<span class="status-badge status-refunded">Reembolsado</span>';
-                else if (sale.uiStatus === 'danger') statusBadge = '<span class="status-badge status-danger">Expirada</span>';
-                else if (sale.uiStatus === 'warning') {
-                    if (sale.daysLeft === 0) statusBadge = '<span class="status-badge status-active">Expira Hoje</span>';
-                    else if (sale.daysLeft === 1) statusBadge = '<span class="status-badge status-active">Expira Amanhã</span>';
-                    else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
+                else if (sale.uiStatus === 'danger' || sale.exactMinutesLeft < 0) statusBadge = '<span class="status-badge status-danger">Expirada</span>';
+                else if (sale.uiStatus === 'warning' || sale.uiStatus === 'active') {
+                    if (sale.exactHoursLeft > 24) {
+                        statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
+                    } else if (sale.exactHoursLeft > 0) {
+                        statusBadge = `<span class="status-badge status-active">Expira em ${sale.exactHoursLeft} hrs</span>`;
+                    } else {
+                        statusBadge = `<span class="status-badge status-active">Expira em ${sale.exactMinutesLeft} min</span>`;
+                    }
                 }
-                else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
 
                 const sourceBadge = (sale.source === 'ggsel' || sale.source === 'ggmax')
                     ? '<span class="source-badge source-ggmax">GGMax</span>' 
