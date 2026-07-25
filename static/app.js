@@ -143,15 +143,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 let statusBadge = '';
                 if (sale.uiStatus === 'revoked') statusBadge = '<span class="status-badge status-revoked">Acesso Retirado</span>';
                 else if (sale.uiStatus === 'refunded') statusBadge = '<span class="status-badge status-refunded">Reembolsado</span>';
-                else if (sale.uiStatus === 'danger' || sale.exactMinutesLeft < 0) statusBadge = '<span class="status-badge status-danger">Expirada</span>';
-                else if (sale.uiStatus === 'warning' || sale.uiStatus === 'active') {
-                    if (sale.exactHoursLeft > 24) {
-                        statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
-                    } else if (sale.exactHoursLeft > 0) {
-                        statusBadge = `<span class="status-badge status-active">Expira em ${sale.exactHoursLeft} hrs</span>`;
+                else if (sale.uiStatus === 'danger' || sale.exactMinutesLeft < 0) {
+                    statusBadge = '<span class="status-badge status-danger">Expirado</span>';
+                }
+                else {
+                    let badgeClass = 'status-active'; // verde para > 3 dias
+                    let text = '';
+                    
+                    if (sale.exactHoursLeft < 24) {
+                        badgeClass = 'status-danger'; // vermelho para < 24h
+                        if (sale.exactHoursLeft > 0) text = `${sale.exactHoursLeft}h`;
+                        else text = `${sale.exactMinutesLeft}m`;
                     } else {
-                        statusBadge = `<span class="status-badge status-active">Expira em ${sale.exactMinutesLeft} min</span>`;
+                        if (sale.daysLeft <= 3) badgeClass = 'status-warning'; // amarelo para 1 a 3 dias
+                        text = sale.daysLeft === 1 ? '1 dia' : `${sale.daysLeft} dias`;
                     }
+                    
+                    statusBadge = `<span class="status-badge ${badgeClass}">${text}</span>`;
                 }
 
                 const sourceBadge = (sale.source === 'ggsel' || sale.source === 'ggmax')
