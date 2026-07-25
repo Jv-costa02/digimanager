@@ -180,20 +180,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let emailMatch = cleanDetails.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
         let email = emailMatch ? emailMatch[0] : null;
         
-        // 2. Achar a senha (ignorando a senha se for igual ao e-mail, a menos que seja a única opção)
+        // 2. Achar a senha
         let passRegex = /(?:Пароль|Пapoль|Password|Senha|Pass|Pwd)[^\:]*:\s*([^\s\n\r\\]+)/gi;
         let passMatch = null;
         let match;
         
         while ((match = passRegex.exec(cleanDetails)) !== null) {
-            let extractedPass = match[1];
+            let extractedPass = match[1].replace(/["']/g, ''); // Remove aspas do JSON
+            
             // Se a senha extraída NÃO for o email, preferimos essa!
             if (!email || extractedPass.toLowerCase() !== email.toLowerCase()) {
                 passMatch = [match[0], extractedPass];
                 break;
             }
-            // Se for igual, guardamos como fallback
-            if (!passMatch) passMatch = [match[0], extractedPass];
         }
         
         let linkMatch = cleanDetails.match(/https?:\/\/[^\s\n\r<>"'\\]+/);
@@ -201,9 +200,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tentar formato email:senha
         let comboMatch = cleanDetails.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}):([^\s\n\r\\]+)/);
         
-        if (comboMatch && (!passMatch || (passMatch[1].toLowerCase() === comboMatch[1].toLowerCase()))) {
-            email = comboMatch[1];
-            passMatch = [null, comboMatch[2]];
+        if (comboMatch) {
+            let comboPass = comboMatch[2].replace(/["']/g, '');
+            if (!passMatch || (passMatch[1].toLowerCase() === comboPass.toLowerCase())) {
+                email = comboMatch[1];
+                passMatch = [null, comboPass];
+            }
+        }
+        
+        // Proteção final: Se a senha for EXATAMENTE igual ao email, nós anulamos ela
+        // porque não existe senha que seja o próprio email em serviços normais
+        if (passMatch && email && passMatch[1].replace(/["']/g, '').toLowerCase() === email.toLowerCase()) {
+            passMatch = null;
         }
         
         if (email) {
