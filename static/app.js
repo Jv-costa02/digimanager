@@ -580,3 +580,37 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) {}
     }, 2000);
 });
+
+// Custom Dropdowns
+document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+    const trigger = dropdown.querySelector('.dropdown-trigger');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    const select = dropdown.querySelector('select');
+    const items = dropdown.querySelectorAll('.dropdown-item');
+    const strong = trigger.querySelector('strong');
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.custom-dropdown').forEach(d => {
+            if (d !== dropdown) d.classList.remove('open');
+        });
+        dropdown.classList.toggle('open');
+    });
+
+    items.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            items.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            const val = item.getAttribute('data-value');
+            select.value = val;
+            strong.textContent = item.textContent.trim();
+            dropdown.classList.remove('open');
+            select.dispatchEvent(new Event('change'));
+        });
+    });
+});
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('open'));
+});

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SalesControl</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=2.13">
+    <link rel="stylesheet" href="/static/styles.css?v=2.14">
 </head>
 <body>
     <div class="app-container">
@@ -46,9 +46,18 @@
                 <div class="actions">
                     <!-- Grupo de Filtros -->
                     <div class="filter-group-new">
-                        <div class="filter-pill">
-                            <label>PLANO</label>
-                            <select id="duration-filter" class="custom-select">
+                        <div class="custom-dropdown" id="dropdown-duration">
+                            <div class="dropdown-trigger">
+                                <span>PLANO: <strong>Todos</strong></span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item active" data-value="all">Todos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="7">7 Dias <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="15">15 Dias <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="30">30 Dias <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                            </div>
+                            <select id="duration-filter" style="display: none;">
                                 <option value="all">Todos</option>
                                 <option value="7">7 Dias</option>
                                 <option value="15">15 Dias</option>
@@ -56,9 +65,18 @@
                             </select>
                         </div>
                         
-                        <div class="filter-pill">
-                            <label>PERÍODO</label>
-                            <select id="period-filter" class="custom-select">
+                        <div class="custom-dropdown" id="dropdown-period">
+                            <div class="dropdown-trigger">
+                                <span>PERÍODO: <strong>Sempre</strong></span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item active" data-value="all">Sempre <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="7">Últimos 7 dias <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="15">Últimos 15 dias <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="30">Últimos 30 dias <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                            </div>
+                            <select id="period-filter" style="display: none;">
                                 <option value="all">Sempre</option>
                                 <option value="7">Últimos 7 dias</option>
                                 <option value="15">Últimos 15 dias</option>
@@ -156,6 +174,6 @@
                 <button class="btn btn-add-ggmax" id="ggmax-submit">Salvar Venda</button>
             </div>
     </div>
-    <script src="/static/app.js?v=2.13"></script>
+    <script src="/static/app.js?v=2.14"></script>
 </body>
 </html>
