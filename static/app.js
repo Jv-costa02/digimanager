@@ -316,11 +316,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modalActions.style.display = 'flex';
             modalActions.innerHTML = `
                 <div style="display: flex; gap: 10px; width: 100%;">
-                    <button class="btn btn-edit" onclick="editarData(${sale.id}, '${sale.sale_date ? sale.sale_date.split(' ')[0] : ''}', event); fecharModal();" title="Editar Data" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 10px; color: #fff;">
+                    <button class="btn btn-edit" onclick="editarData(${sale.id}, '${sale.sale_date ? sale.sale_date.split(' ')[0] : ''}', event);" title="Editar Data" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 10px; color: #fff;">
                         Editar
                     </button>
-                    ${sale.uiStatus !== 'revoked' && sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event); fecharModal();" style="flex: 1; padding: 10px; background: #ca8a04;">Retirar</button>` : ''}
-                    <button class="btn btn-delete" onclick="deletarVenda(${sale.id}, event); fecharModal();" style="flex: 1; background: rgba(239, 68, 68, 0.8); padding: 10px;">Excluir</button>
+                    ${sale.uiStatus !== 'revoked' && sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event);" style="flex: 1; padding: 10px; background: #ca8a04;">Retirar</button>` : ''}
+                    <button class="btn btn-delete" onclick="deletarVenda(${sale.id}, event);" style="flex: 1; background: rgba(239, 68, 68, 0.8); padding: 10px;">Excluir</button>
                 </div>
             `;
         } else {
@@ -333,6 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function fecharModal() {
         modal.classList.add('hidden');
     }
+    window.fecharModal = fecharModal;
 
     window.marcarRetirada = async (id, event) => {
         if(event) event.stopPropagation();
@@ -345,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ status: 'revoked' })
             });
             if (res.ok) {
+                window.fecharModal();
                 loadSales();
             } else {
                 alert('Erro ao marcar retirada');
@@ -365,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ sale_date: novaData })
                 });
                 if (res.ok) {
+                    window.fecharModal();
                     loadSales();
                 } else {
                     alert('Erro ao atualizar data');
