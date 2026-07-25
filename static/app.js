@@ -220,51 +220,52 @@ document.addEventListener('DOMContentLoaded', () => {
             if (linkMatch && !passMatch) {
                 let cardTitle = isGmail ? "Acesso via Painel Google" : "Acesso via Painel";
                 htmlContent = `
-                    <div class="smart-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; margin-bottom: 5px;">
+                    <div class="smart-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 10px;">
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                                <h3 style="margin: 0; color: #e2e8f0; font-size: 0.9rem; font-weight: 500;">${cardTitle}</h3>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                            <h3 style="margin: 0; color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">${cardTitle}</h3>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03);">
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">E-mail Cadastrado</span>
+                                <span style="color: #f8fafc; font-family: monospace; font-size: 0.85rem; letter-spacing: 0.5px;">${email}</span>
                             </div>
-                            
-                            <a href="${linkMatch[0]}" target="_blank" style="background: #10b981; color: #fff; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                            <button onclick="navigator.clipboard.writeText('${email}'); this.innerHTML='✓ Copiado'; this.style.color='#10b981'; this.style.borderColor='#10b981'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end;">
+                            <a href="${linkMatch[0]}" target="_blank" style="background: #10b981; color: #fff; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                                 Acessar Painel 
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                             </a>
-                        </div>
-                        
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03);">
-                            <span style="color: #f8fafc; font-family: monospace; font-size: 0.85rem; letter-spacing: 0.5px;">${email}</span>
-                            <button onclick="navigator.clipboard.writeText('${email}'); this.innerHTML='✓ Copiado'; this.style.color='#10b981'; this.style.borderColor='#10b981'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
                         </div>
                     </div>
                 `;
             } else if (passMatch) {
                 htmlContent = `
-                    <div class="smart-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; margin-bottom: 5px;">
+                    <div class="smart-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 10px;">
                         
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-                            <h3 style="margin: 0; color: #e2e8f0; font-size: 0.9rem; font-weight: 500;">Credenciais Outlook</h3>
+                            <h3 style="margin: 0; color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">Credenciais Outlook</h3>
                         </div>
                         
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03);">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; width: 45px; letter-spacing: 0.5px;">E-mail</span>
-                                    <span style="color: #f8fafc; font-family: monospace; font-size: 0.85rem;">${email}</span>
-                                </div>
-                                <button onclick="navigator.clipboard.writeText('${email}'); this.innerHTML='✓ Copiado'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03);">
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">E-mail</span>
+                                <span style="color: #f8fafc; font-family: monospace; font-size: 0.85rem;">${email}</span>
                             </div>
-                            
-                            <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03);">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; width: 45px; letter-spacing: 0.5px;">Senha</span>
-                                    <span style="color: #f8fafc; font-family: monospace; font-size: 0.85rem;">${passMatch[1]}</span>
-                                </div>
-                                <button onclick="navigator.clipboard.writeText('${passMatch[1]}'); this.innerHTML='✓ Copiado'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
+                            <button onclick="navigator.clipboard.writeText('${email}'); this.innerHTML='✓ Copiado'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03);">
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Senha</span>
+                                <span style="color: #f8fafc; font-family: monospace; font-size: 0.85rem;">${passMatch[1]}</span>
                             </div>
+                            <button onclick="navigator.clipboard.writeText('${passMatch[1]}'); this.innerHTML='✓ Copiado'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
                         </div>
                     </div>
                 `;
