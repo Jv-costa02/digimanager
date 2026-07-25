@@ -111,6 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         });
 
+        // Ordenar: primeiro 7 dias, depois 15 dias, depois 30 dias.
+        filteredSales.sort((a, b) => {
+            const durA = a.duration_days || 7;
+            const durB = b.duration_days || 7;
+            if (durA !== durB) return durA - durB;
+            return new Date(a.expiration_date) - new Date(b.expiration_date);
+        });
+
         if (filteredSales.length === 0) {
             emptyState.classList.remove('hidden');
             tableBody.parentElement.classList.add('hidden');
@@ -126,9 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (sale.uiStatus === 'refunded') statusBadge = '<span class="status-badge status-refunded">Reembolsado</span>';
                 else if (sale.uiStatus === 'danger') statusBadge = '<span class="status-badge status-danger">Expirada</span>';
                 else if (sale.uiStatus === 'warning') {
-                    if (sale.daysLeft === 0) statusBadge = '<span class="status-badge status-warning">Expira Hoje</span>';
-                    else if (sale.daysLeft === 1) statusBadge = '<span class="status-badge status-warning">Expira Amanhã</span>';
-                    else statusBadge = `<span class="status-badge status-warning">Expira em ${sale.daysLeft} dias</span>`;
+                    if (sale.daysLeft === 0) statusBadge = '<span class="status-badge status-active">Expira Hoje</span>';
+                    else if (sale.daysLeft === 1) statusBadge = '<span class="status-badge status-active">Expira Amanhã</span>';
+                    else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
                 }
                 else statusBadge = `<span class="status-badge status-active">${sale.daysLeft} dias restantes</span>`;
 
