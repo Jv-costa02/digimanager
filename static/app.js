@@ -235,10 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button onclick="navigator.clipboard.writeText('${email}'); this.innerHTML='✓ Copiado'; this.style.color='#10b981'; this.style.borderColor='#10b981'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
                         </div>
 
-                        <div style="display: flex; justify-content: flex-end;">
-                            <a href="${linkMatch[0]}" target="_blank" style="background: #10b981; color: #fff; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                        <div style="display: flex; width: 100%;">
+                            <a href="${linkMatch[0]}" target="_blank" style="background: #10b981; color: #fff; width: 100%; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; justify-content: center; align-items: center; gap: 6px; transition: 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                                 Acessar Painel 
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                             </a>
                         </div>
                     </div>
