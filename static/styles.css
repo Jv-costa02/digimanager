@@ -461,7 +461,7 @@ select option {
 .filter-pill .custom-select { background: transparent; color: var(--text); border: none; font-size: 0.9rem; font-weight: 500; outline: none; cursor: pointer; padding: 2px 4px; }
 
 .custom-dropdown { position: relative; }
-.dropdown-trigger { display: flex; align-items: center; background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 12px; border-radius: 6px; gap: 10px; cursor: pointer; transition: 0.2s; color: var(--text-muted); font-size: 0.85rem; }
+.dropdown-trigger { display: flex; align-items: center; background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 12px; border-radius: 6px; gap: 10px; cursor: pointer; transition: 0.2s; color: #cbd5e1; font-size: 0.85rem; }
 .dropdown-trigger strong { color: var(--text); font-weight: 500; }
 .dropdown-trigger:hover, .custom-dropdown.open .dropdown-trigger { border-color: rgba(59, 130, 246, 0.5); background: rgba(255,255,255,0.02); }
 .dropdown-menu { position: absolute; top: calc(100% + 4px); left: 0; min-width: 160px; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 2px; z-index: 100; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); opacity: 0; pointer-events: none; transform: translateY(-10px); transition: all 0.2s; }
