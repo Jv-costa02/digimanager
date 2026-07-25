@@ -602,9 +602,21 @@ document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
             e.stopPropagation();
             items.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
+            
             const val = item.getAttribute('data-value');
             select.value = val;
-            strong.textContent = item.textContent.trim();
+            
+            let displayTxt = item.textContent.trim();
+            if (dropdown.id === 'dropdown-period' && val !== 'all') {
+                const days = parseInt(val);
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(endDate.getDate() - days);
+                const format = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+                displayTxt = `${format(startDate)} ~ ${format(endDate)}`;
+            }
+            
+            strong.textContent = displayTxt;
             dropdown.classList.remove('open');
             select.dispatchEvent(new Event('change'));
         });
