@@ -435,14 +435,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch('/api/import/ggmax-discord-sync', { method: 'POST' });
                 const data = await res.json();
                 
-                if (res.ok) {
-                    if (data.imported === 0 && data.debug_info && data.debug_info.length > 0) {
-                        alert(`Li ${data.skipped} mensagens que já existiam, mas encontrei novas mensagens que o robô não entendeu o formato. Veja o conteúdo da primeira:\n\n${data.debug_info[0].body.substring(0, 250)}`);
+                if (data.status === 'success') {
+                    if (data.unparsed > 0 && data.debug_info && data.debug_info.length > 0) {
+                        alert(`Li ${data.skipped} mensagens que já existiam, mas encontrei ${data.unparsed} mensagens que o robô não entendeu o formato. Veja o conteúdo da primeira:\n\n${data.debug_info[0].body.substring(0, 250)}`);
+                    } else if (data.imported === 0) {
+                        alert(`Sincronização concluída!\n\nNenhuma nova venda encontrada.\n${data.skipped} mensagens lidas já estavam no sistema.`);
                     } else {
                         alert(`Sincronização concluída!\n\n${data.imported} novas vendas importadas.\n${data.skipped} já existiam no sistema.`);
                     }
-                } else {
-                    alert(`Erro na sincronização: ${data.error || 'Erro desconhecido'}`);
+                    loadSales();
+                } else {  alert(`Erro na sincronização: ${data.error || 'Erro desconhecido'}`);
                 }
             } catch(e) {
                 alert('Erro de conexão ao tentar ler o Discord.');

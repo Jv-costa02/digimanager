@@ -466,12 +466,12 @@ def import_ggmax_discord_sync():
     if not discord_token or not channel_id:
         return jsonify({"error": "Faltam as variáveis DISCORD_BOT_TOKEN ou DISCORD_CHANNEL_ID no Railway."}), 400
         
-    imported = 0
-    skipped = 0
-    errors = []
-    debug_info = []
-    
     try:
+        imported = 0
+        skipped = 0
+        unparsed = 0
+        debug_info = []
+        
         url = f"https://discord.com/api/v10/channels/{channel_id}/messages?limit=100"
         headers = {
             "Authorization": f"Bot {discord_token}"
@@ -506,12 +506,9 @@ def import_ggmax_discord_sync():
                 full_text += " " + snap_msg.get('content', '')
                 for embed in snap_msg.get('embeds', []):
                     full_text += f" {embed.get('title', '')} {embed.get('description', '')}"
-                    for field in embed.get('fields', []):
+                    for field in snap_msg.get('fields', []):
                         full_text += f" {field.get('name', '')} {field.get('value', '')}"
                         
-            if len(debug_info) < 3:
-                debug_info.append({"subject": f"Discord Type: {msg.get('type')}", "body": full_text[:1000] if full_text.strip() else json.dumps(msg, ensure_ascii=False)[:1000]})
-                
             if not full_text.strip():
                 continue
                 
@@ -526,6 +523,9 @@ def import_ggmax_discord_sync():
             order_id = order_match.group(1).strip() if order_match else None
             
             if not order_id:
+                unparsed += 1
+                if len(debug_info) < 3:
+                    debug_info.append({"subject": f"Discord Type: {msg.get('type')}", "body": full_text[:1000] if full_text.strip() else json.dumps(msg, ensure_ascii=False)[:1000]})
                 continue
                 
             cursor.execute('SELECT id FROM sales WHERE order_id = ?', (order_id,))
@@ -582,12 +582,18 @@ def import_ggmax_discord_sync():
         conn.commit()
         conn.close()
         
+        return jsonify({
+            "status": "success", 
+            "imported": imported, 
+            "skipped": skipped,
+            "unparsed": unparsed,
+            "debug_info": debug_info,
+            "errors": []
+        }), 200
+        
     except Exception as e:
-        errors.append(str(e))
         print("Erro no Discord Sync:", e)
         return jsonify({"error": f"Falha na conexão com o Discord: {str(e)}"}), 500
-        
-    return jsonify({"status": "success", "imported": imported, "skipped": skipped, "errors": errors, "debug_info": debug_info})
 
 # === VERIFICAÇÃO DE REFUNDS ===
 

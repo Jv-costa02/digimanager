@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SalesControl</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=2.0">
+    <link rel="stylesheet" href="/static/styles.css?v=2.13">
 </head>
 <body>
     <div class="app-container">
@@ -45,24 +45,26 @@
                 
                 <div class="actions">
                     <!-- Grupo de Filtros -->
-                    <div class="filter-group">
-                        <label>Duração:</label>
-                        <select id="duration-filter" class="custom-select">
-                            <option value="all">Todas</option>
-                            <option value="7">7 Dias</option>
-                            <option value="15">15 Dias</option>
-                            <option value="30">30 Dias</option>
-                        </select>
+                    <div class="filter-group-new">
+                        <div class="filter-pill">
+                            <label>PLANO</label>
+                            <select id="duration-filter" class="custom-select">
+                                <option value="all">Todos</option>
+                                <option value="7">7 Dias</option>
+                                <option value="15">15 Dias</option>
+                                <option value="30">30 Dias</option>
+                            </select>
+                        </div>
                         
-                        <div class="filter-divider"></div>
-                        
-                        <label>Vendas:</label>
-                        <select id="period-filter" class="custom-select">
-                            <option value="all">Sempre</option>
-                            <option value="7">Últimos 7 dias</option>
-                            <option value="15">Últimos 15 dias</option>
-                            <option value="30">Últimos 30 dias</option>
-                        </select>
+                        <div class="filter-pill">
+                            <label>PERÍODO</label>
+                            <select id="period-filter" class="custom-select">
+                                <option value="all">Sempre</option>
+                                <option value="7">Últimos 7 dias</option>
+                                <option value="15">Últimos 15 dias</option>
+                                <option value="30">Últimos 30 dias</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <button class="btn btn-import" id="import-btn">📥 Importar Digiseller</button>
@@ -153,9 +155,7 @@
                 <button class="btn btn-close" id="ggmax-close" style="margin-right: 1rem; background: transparent; border: 1px solid var(--border);">Cancelar</button>
                 <button class="btn btn-add-ggmax" id="ggmax-submit">Salvar Venda</button>
             </div>
-        </div>
     </div>
-
-    <script src="/static/app.js?v=2.11"></script>
+    <script src="/static/app.js?v=2.13"></script>
 </body>
 </html>

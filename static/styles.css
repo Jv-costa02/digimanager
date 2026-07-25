@@ -171,7 +171,7 @@ select option {
 }
 
 /* Filtros Estilizados */
-.filter-group {
+.filter-group-old {
     display: flex;
     align-items: center;
     background: rgba(0, 0, 0, 0.25);
@@ -453,3 +453,9 @@ select option {
     border: 1px solid rgba(14, 165, 233, 0.3);
     white-space: nowrap;
 }
+
+.filter-group-new { display: flex; gap: 10px; align-items: center; }
+.filter-pill { display: flex; align-items: center; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 12px; border-radius: 6px; gap: 8px; transition: 0.2s; cursor: pointer; }
+.filter-pill:hover, .filter-pill:focus-within { border-color: rgba(59, 130, 246, 0.5); }
+.filter-pill label { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.filter-pill .custom-select { background: transparent; color: var(--text); border: none; font-size: 0.9rem; font-weight: 500; outline: none; cursor: pointer; padding: 2px 4px; }
