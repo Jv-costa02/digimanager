@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button onclick="navigator.clipboard.writeText('${email}'); this.innerHTML='✓ Copiado'; this.style.color='#10b981'; this.style.borderColor='#10b981'; setTimeout(()=>{this.innerHTML='Copiar'; this.style.color='#94a3b8'; this.style.borderColor='rgba(255,255,255,0.2)'}, 2000)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;">Copiar</button>
                         </div>
 
-                        <a href="${linkMatch[0]}" target="_blank" class="btn" style="background: #10b981; width: 100%; display: block; text-align: center; text-decoration: none; transition: 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                        <a href="${linkMatch[0]}" target="_blank" style="background: #10b981; color: #ffffff; width: 100%; display: block; text-align: center; text-decoration: none; transition: 0.2s; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; box-sizing: border-box;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                             Acessar Painel
                         </a>
                     </div>
