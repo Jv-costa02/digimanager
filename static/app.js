@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.onclick = (e) => showDetails(encodeURIComponent(sale.account_details || ''), e, sale);
 
                 tr.innerHTML = `
-                    <td><strong>#${sale.order_id}</strong></td>
+                    <td><strong>${sale.order_id}</strong></td>
                     <td>${sale.product_name}</td>
                     <td>${sourceBadge}</td>
                     <td>${sale.buyer_email}</td>
