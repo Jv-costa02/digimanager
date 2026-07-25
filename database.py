@@ -7,6 +7,9 @@ import os
 DB_NAME = os.environ.get('DB_PATH', 'sales.db')
 
 def get_db():
+    db_dir = os.path.dirname(DB_NAME)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn

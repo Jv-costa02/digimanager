@@ -75,15 +75,14 @@
             <div class="table-container">
                 <table class="sales-table">
                     <colgroup>
-                        <col style="width: 9%">
-                        <col style="width: 18%">
-                        <col style="width: 8%">
-                        <col style="width: 16%">
-                        <col style="width: 6%">
-                        <col style="width: 9%">
-                        <col style="width: 9%">
                         <col style="width: 10%">
-                        <col style="width: 15%">
+                        <col style="width: 20%">
+                        <col style="width: 10%">
+                        <col style="width: 20%">
+                        <col style="width: 8%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 12%">
                     </colgroup>
                     <thead>
                         <tr>
@@ -95,7 +94,6 @@
                             <th>Venda</th>
                             <th>Expira</th>
                             <th>Status</th>
-                            <th>Ação</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
@@ -118,8 +116,11 @@
             <div class="modal-body" id="modal-details">
                 <!-- details -->
             </div>
-            <div class="modal-actions">
-                <button class="btn btn-close" id="modal-close">Fechar</button>
+            <div class="modal-actions" id="modal-sale-actions" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: 15px; justify-content: space-between; display: flex;">
+                <!-- buttons injected here -->
+            </div>
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button class="btn btn-close" id="modal-close" style="width: 100%;">Fechar Painel</button>
             </div>
         </div>
     </div>

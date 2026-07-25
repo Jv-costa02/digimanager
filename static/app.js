@@ -136,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? '<span class="source-badge source-ggmax">GGMax</span>' 
                     : '<span class="source-badge source-digi">Digiseller</span>';
 
+                tr.className = 'clickable-row';
+                tr.style.cursor = 'pointer';
+                tr.onclick = (e) => showDetails(encodeURIComponent(sale.account_details || ''), e, sale);
+
                 tr.innerHTML = `
                     <td><strong>#${sale.order_id}</strong></td>
                     <td>${sale.product_name}</td>
@@ -145,12 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${new Date(sale.sale_date).toLocaleDateString()}</td>
                     <td>${new Date(sale.expiration_date).toLocaleDateString()}</td>
                     <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-details" onclick="showDetails('${encodeURIComponent(sale.account_details)}', event)">Ver Dados</button>
-                        <button class="btn btn-details" onclick="editarData(${sale.id}, '${sale.sale_date.split(' ')[0]}', event)" title="Editar Data de Compra">✏️</button>
-                        ${sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event)" style="background: #ca8a04; margin-top: 5px;">Retirar</button>` : ''}
-                        <button class="btn btn-revoke" onclick="deletarVenda(${sale.id}, event)" style="background: #ef4444; margin-top: 5px;">Excluir</button>
-                    </td>
                 `;
                 
                 // Sistema de Seleção de Linha
@@ -167,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.showDetails = (encodedDetails, event) => {
+    window.showDetails = (encodedDetails, event, sale) => {
         if(event) event.stopPropagation();
         
         let details = decodeURIComponent(encodedDetails);
@@ -252,8 +250,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // -----------------------------------------
         
+        // Injetar botões de ação
+        const modalActions = document.getElementById('modal-sale-actions');
+        if (sale) {
+            modalActions.style.display = 'flex';
+            modalActions.innerHTML = `
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="btn btn-edit" onclick="editarData(${sale.id}, '${sale.sale_date ? sale.sale_date.split(' ')[0] : ''}', event); fecharModal();" title="Editar Data" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 10px; color: #fff;">
+                        ✏️ Editar
+                    </button>
+                    ${sale.uiStatus !== 'revoked' && sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event); fecharModal();" style="flex: 1; padding: 10px; background: #ca8a04;">🛑 Retirar</button>` : ''}
+                    <button class="btn btn-delete" onclick="deletarVenda(${sale.id}, event); fecharModal();" style="flex: 1; background: rgba(239, 68, 68, 0.8); padding: 10px;">🗑️ Excluir</button>
+                </div>
+            `;
+        } else {
+            modalActions.style.display = 'none';
+        }
+
         modal.classList.remove('hidden');
     };
+    
+    function fecharModal() {
+        modal.classList.add('hidden');
+    }
 
     window.marcarRetirada = async (id, event) => {
         if(event) event.stopPropagation();
