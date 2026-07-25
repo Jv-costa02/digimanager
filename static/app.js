@@ -257,10 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
             modalActions.innerHTML = `
                 <div style="display: flex; gap: 10px; width: 100%;">
                     <button class="btn btn-edit" onclick="editarData(${sale.id}, '${sale.sale_date ? sale.sale_date.split(' ')[0] : ''}', event); fecharModal();" title="Editar Data" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 10px; color: #fff;">
-                        ✏️ Editar
+                        Editar
                     </button>
-                    ${sale.uiStatus !== 'revoked' && sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event); fecharModal();" style="flex: 1; padding: 10px; background: #ca8a04;">🛑 Retirar</button>` : ''}
-                    <button class="btn btn-delete" onclick="deletarVenda(${sale.id}, event); fecharModal();" style="flex: 1; background: rgba(239, 68, 68, 0.8); padding: 10px;">🗑️ Excluir</button>
+                    ${sale.uiStatus !== 'revoked' && sale.status !== 'revoked' ? `<button class="btn btn-revoke" onclick="marcarRetirada(${sale.id}, event); fecharModal();" style="flex: 1; padding: 10px; background: #ca8a04;">Retirar</button>` : ''}
+                    <button class="btn btn-delete" onclick="deletarVenda(${sale.id}, event); fecharModal();" style="flex: 1; background: rgba(239, 68, 68, 0.8); padding: 10px;">Excluir</button>
                 </div>
             `;
         } else {
