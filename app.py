@@ -135,9 +135,6 @@ def ggsel_webhook():
                 state = content.get('invoice_state')
                 owner = str(content.get('owner'))
                 
-                buyer_info = content.get('buyer_info', {})
-                buyer_email = buyer_info.get('email') or data.get('email') or data.get('buyer_email') or 'N/A'
-                
                 if owner != str(ggsel_seller_id):
                     return jsonify({"error": "Purchase does not belong to this seller"}), 403
                     
@@ -665,37 +662,6 @@ def check_refunds():
                 pass
     
     return jsonify({"status": "success", "checked": checked, "refunded": refunded_count})
-
-@app.route('/api/fix_ggsel_emails')
-def fix_ggsel_emails():
-    token = get_ggsel_token()
-    if not token:
-        return jsonify({"error": "Failed to get token"}), 500
-        
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, order_id FROM sales WHERE source='ggsel'")
-    rows = cursor.fetchall()
-    
-    fixed = 0
-    for row in rows:
-        order_id = row['order_id']
-        url = f"https://seller.ggsel.com/api_sellers/api/purchase/info/{order_id}?token={token}"
-        try:
-            resp = requests.get(url)
-            data = resp.json()
-            if data.get('retval') == 0:
-                buyer_info = data.get('content', {}).get('buyer_info', {})
-                email = buyer_info.get('email')
-                if email:
-                    cursor.execute("UPDATE sales SET buyer_email = ? WHERE id = ?", (email, row['id']))
-                    fixed += 1
-        except Exception as e:
-            print(f"Error {order_id}: {e}")
-            
-    conn.commit()
-    conn.close()
-    return jsonify({"success": True, "fixed_count": fixed})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
