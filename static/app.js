@@ -124,6 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!textLower.includes('@gmail.com') && !textLower.includes('@googlemail.com')) return false;
                     } else if (accountType === 'outlook') {
                         if (!textLower.includes('@hotmail.com') && !textLower.includes('@outlook.com') && !textLower.includes('@live.com')) return false;
+                    } else if (accountType === 'vlxsmfy') {
+                        if (!textLower.includes('@vlxsmfy.com')) return false;
                     }
                 } else {
                     return false; // Sem detalhes de conta
