@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabs = document.querySelectorAll('.tab');
     const durationFilter = document.getElementById('duration-filter');
     const periodFilter = document.getElementById('period-filter');
+    const accountTypeFilter = document.getElementById('account-type-filter');
 
     // Stats elements
     const countActive = document.getElementById('count-active');
@@ -68,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (sale.status === 'revoked') {
                 sale.uiStatus = 'revoked';
-            } else if (diffDays < 0) {
+            } else if (diffDays < 0 || sale.exactMinutesLeft < 0) {
                 sale.uiStatus = 'danger';
             } else if (diffDays <= 3) {
                 sale.uiStatus = 'warning';
@@ -111,6 +112,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 if (diffDays > parseInt(periodDays)) {
                     return false; // Fora do período
+                }
+            }
+
+            // Filtro por tipo de conta (google, outlook)
+            if (accountTypeFilter && accountTypeFilter.value !== 'all') {
+                const accountType = accountTypeFilter.value;
+                if (sale.account_details) {
+                    let textLower = sale.account_details.toLowerCase();
+                    if (accountType === 'google') {
+                        if (!textLower.includes('@gmail.com') && !textLower.includes('@googlemail.com')) return false;
+                    } else if (accountType === 'outlook') {
+                        if (!textLower.includes('@hotmail.com') && !textLower.includes('@outlook.com') && !textLower.includes('@live.com')) return false;
+                    }
+                } else {
+                    return false; // Sem detalhes de conta
                 }
             }
 
@@ -162,9 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusBadge = `<span class="status-badge ${badgeClass}">${text}</span>`;
                 }
 
-                const sourceBadge = (sale.source === 'ggsel' || sale.source === 'ggmax')
-                    ? '<span class="source-badge source-ggmax">GGMax</span>' 
-                    : '<span class="source-badge source-digi">Digiseller</span>';
+                let sourceBadge = '';
+                if (sale.source === 'ggmax') {
+                    sourceBadge = '<span class="source-badge source-ggmax">GGMax</span>';
+                } else if (sale.source === 'ggsel') {
+                    sourceBadge = '<span class="source-badge source-ggsel">GGSel</span>';
+                } else {
+                    sourceBadge = '<span class="source-badge source-digi">Digiseller</span>';
+                }
 
                 tr.className = 'clickable-row';
                 tr.style.cursor = 'pointer';
@@ -174,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><strong>${sale.order_id}</strong></td>
                     <td>${sale.product_name}</td>
                     <td>${sourceBadge}</td>
-                    <td>${sale.buyer_email}</td>
                     <td><span class="duration-badge">${sale.duration_days || 7} dias</span></td>
                     <td>${new Date(sale.sale_date).toLocaleDateString()}</td>
                     <td>${new Date(sale.expiration_date).toLocaleDateString()}</td>
@@ -210,13 +230,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let emailMatch = cleanDetails.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
         let email = emailMatch ? emailMatch[0] : null;
         
-        // 2. Achar a senha
-        let passRegex = /(?:Пароль|Пapoль|Password|Senha|Pass|Pwd)[^\:]*:\s*([^\s\n\r\\]+)/gi;
+        // 2. Achar a senha (não permitir < ou > no meio para não pular de linha no HTML)
+        let passRegex = /(?:Пароль|Пapoль|Password|Senha|Pass|Pwd)[^\:<>\n\r]*:\s*([^\s\n\r\\]+)/gi;
         let passMatch = null;
         let match;
         
         while ((match = passRegex.exec(cleanDetails)) !== null) {
             let extractedPass = match[1].replace(/["']/g, ''); // Remove aspas do JSON
+            
+            // Limpar sujeira de tags HTML que colaram na senha
+            if (extractedPass.includes('<br>')) {
+                extractedPass = extractedPass.split('<br>')[0];
+            }
+            if (extractedPass.includes('<')) {
+                extractedPass = extractedPass.split('<')[0];
+            }
             
             // Se a senha extraída NÃO for o email, preferimos essa!
             if (!email || extractedPass.toLowerCase() !== email.toLowerCase()) {
@@ -533,13 +561,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Evento de mudança nos filtros
-    durationFilter.addEventListener('change', () => {
-        renderTable();
-    });
-
-    periodFilter.addEventListener('change', () => {
-        renderTable();
-    });
+    durationFilter.addEventListener('change', renderTable);
+    periodFilter.addEventListener('change', renderTable);
+    if (accountTypeFilter) accountTypeFilter.addEventListener('change', renderTable);
 
     // Init
     loadSales();
@@ -629,4 +653,7 @@ document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
 
 document.addEventListener('click', () => {
     document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('open'));
+    
+    // Clear selected row when clicking outside
+    document.querySelectorAll('#table-body tr').forEach(row => row.classList.remove('selected-row'));
 });

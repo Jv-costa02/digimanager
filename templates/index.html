@@ -12,7 +12,7 @@
         <header class="header">
             <div class="logo">
                 <span class="logo-icon">📊</span>
-                <h1>SalesControl</h1>
+                <h1>GGSel</h1>
             </div>
             <div class="stats">
                 <div class="stat-box active-box">
@@ -65,6 +65,26 @@
                             </select>
                         </div>
                         
+                        <div class="custom-dropdown" id="dropdown-account-type">
+                            <div class="dropdown-trigger">
+                                <span style="display: flex; align-items: center; gap: 6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    TIPO: <strong>Todos</strong>
+                                </span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item active" data-value="all">Todos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="google">Google <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="outlook">Outlook <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                            </div>
+                            <select id="account-type-filter" style="display: none;">
+                                <option value="all">Todos</option>
+                                <option value="google">Google</option>
+                                <option value="outlook">Outlook</option>
+                            </select>
+                        </div>
+                        
                         <div class="custom-dropdown" id="dropdown-period">
                             <div class="dropdown-trigger">
                                 <span style="display: flex; align-items: center; gap: 6px;">
@@ -98,10 +118,9 @@
             <div class="table-container">
                 <table class="sales-table">
                     <colgroup>
-                        <col style="width: 10%">
                         <col style="width: 20%">
+                        <col style="width: 30%">
                         <col style="width: 10%">
-                        <col style="width: 20%">
                         <col style="width: 8%">
                         <col style="width: 10%">
                         <col style="width: 10%">
@@ -112,7 +131,6 @@
                             <th>Pedido</th>
                             <th>Produto</th>
                             <th>Origem</th>
-                            <th>Email / Cliente</th>
                             <th>Plano</th>
                             <th>Vendido Em</th>
                             <th>Vencimento</th>

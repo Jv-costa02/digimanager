@@ -124,7 +124,7 @@ def init_db():
         conn.commit()
     
     # Migração: corrigir registros antigos
-    cursor.execute("SELECT id, product_name, account_details, sale_date, duration_days FROM sales WHERE duration_days IS NULL OR duration_days = 7")
+    cursor.execute("SELECT id, product_name, account_details, sale_date, duration_days FROM sales WHERE duration_days IS NULL")
     rows = cursor.fetchall()
     for row in rows:
         product_name = row['product_name'] or ''
