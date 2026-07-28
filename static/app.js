@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabs = document.querySelectorAll('.tab');
     const durationFilter = document.getElementById('duration-filter');
     const periodFilter = document.getElementById('period-filter');
+    const providerFilter = document.getElementById('provider-filter');
 
     // Stats elements
     const countActive = document.getElementById('count-active');
@@ -68,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (sale.status === 'revoked') {
                 sale.uiStatus = 'revoked';
-            } else if (diffDays < 0) {
+            } else if (sale.exactMinutesLeft < 0 || diffDays < 0) {
                 sale.uiStatus = 'danger';
             } else if (diffDays <= 3) {
                 sale.uiStatus = 'warning';
@@ -93,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = '';
         let durationDays = durationFilter.value;
         let periodDays = periodFilter.value;
+        let providerOpt = providerFilter.value;
         const now = new Date();
         
         let filteredSales = allSales.filter(sale => {
@@ -111,6 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 if (diffDays > parseInt(periodDays)) {
                     return false; // Fora do período
+                }
+            }
+
+            // Filtro por provedor de E-mail
+            if (providerOpt !== 'all' && sale.buyer_email) {
+                const email = sale.buyer_email.toLowerCase();
+                if (providerOpt === 'vlxsmfy') {
+                    if (!email.endsWith('@vlxsmfy.com')) return false;
+                } else if (providerOpt === 'gmail') {
+                    if (!email.endsWith('@gmail.com') && !email.endsWith('@googlemail.com')) return false;
+                } else if (providerOpt === 'outlook') {
+                    if (!email.endsWith('@outlook.com') && !email.endsWith('@hotmail.com') && !email.endsWith('@live.com')) return false;
+                } else if (providerOpt === 'other') {
+                    if (email.endsWith('@vlxsmfy.com') || email.endsWith('@gmail.com') || email.endsWith('@googlemail.com') || email.endsWith('@outlook.com') || email.endsWith('@hotmail.com') || email.endsWith('@live.com')) return false;
                 }
             }
 
@@ -538,6 +554,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     periodFilter.addEventListener('change', () => {
+        renderTable();
+    });
+
+    providerFilter.addEventListener('change', () => {
         renderTable();
     });
 

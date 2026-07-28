@@ -86,6 +86,27 @@
                                 <option value="30">Últimos 30 dias</option>
                             </select>
                         </div>
+                        
+                        <div class="custom-dropdown" id="dropdown-provider">
+                            <div class="dropdown-trigger">
+                                <span>PROVEDOR: <strong>Todos</strong></span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item active" data-value="all">Todos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="vlxsmfy">Vlxsmfy <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="gmail">Gmail <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="outlook">Outlook <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                <div class="dropdown-item" data-value="other">Outros <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+                            </div>
+                            <select id="provider-filter" style="display: none;">
+                                <option value="all">Todos</option>
+                                <option value="vlxsmfy">Vlxsmfy</option>
+                                <option value="gmail">Gmail</option>
+                                <option value="outlook">Outlook</option>
+                                <option value="other">Outros</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <button class="btn btn-import" id="import-btn">📥 Importar Digiseller</button>
@@ -177,6 +198,6 @@
                 <button class="btn btn-add-ggmax" id="ggmax-submit">Salvar Venda</button>
             </div>
     </div>
-    <script src="/static/app.js?v=2.18"></script>
+    <script src="/static/app.js?v=2.19"></script>
 </body>
 </html>

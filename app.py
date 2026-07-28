@@ -496,18 +496,18 @@ def import_ggmax_discord_sync():
             
             full_text = content
             for embed in embeds:
-                full_text += f" {embed.get('title', '')} {embed.get('description', '')}"
+                full_text += f"\n{embed.get('title', '')}\n{embed.get('description', '')}\n"
                 for field in embed.get('fields', []):
-                    full_text += f" {field.get('name', '')} {field.get('value', '')}"
+                    full_text += f"\n{field.get('name', '')} {field.get('value', '')}\n"
                     
             # Suporte para mensagens encaminhadas (simulações)
             for snapshot in msg.get('message_snapshots', []):
                 snap_msg = snapshot.get('message', {})
-                full_text += " " + snap_msg.get('content', '')
+                full_text += "\n" + snap_msg.get('content', '') + "\n"
                 for embed in snap_msg.get('embeds', []):
-                    full_text += f" {embed.get('title', '')} {embed.get('description', '')}"
+                    full_text += f"\n{embed.get('title', '')}\n{embed.get('description', '')}\n"
                     for field in snap_msg.get('fields', []):
-                        full_text += f" {field.get('name', '')} {field.get('value', '')}"
+                        full_text += f"\n{field.get('name', '')} {field.get('value', '')}\n"
                         
             if not full_text.strip():
                 continue
@@ -517,8 +517,8 @@ def import_ggmax_discord_sync():
             if not order_match:
                 order_match = re.search(r'Pedido:[\s<]*#?([A-Z0-9]+)', full_text, re.IGNORECASE)
             if not order_match:
-                # Novo formato: **ID da Venda:** [62dzze3](...)
-                order_match = re.search(r'ID da Venda:\*\*.*?\[?([a-zA-Z0-9]+)\]?', full_text, re.IGNORECASE)
+                # Novo formato: **ID da Venda:** [62dzze3](...) ou apenas ID da Venda: 62dzze3
+                order_match = re.search(r'ID da Venda:[\s\*\*]*\[?([a-zA-Z0-9]+)\]?', full_text, re.IGNORECASE)
                 
             order_id = order_match.group(1).strip() if order_match else None
             
@@ -537,8 +537,8 @@ def import_ggmax_discord_sync():
             # GGMax discord webhook embed costuma ser: "1 x CHATGPT PLUS..."
             product_match = re.search(r'\d+\s*[xX]\s*([^\n\r]+)', full_text)
             if not product_match:
-                # Novo formato: **Anúncio:** [Nome do produto...](...)
-                product_match = re.search(r'Anúncio:\*\*\s*(.+)', full_text, re.IGNORECASE)
+                # Novo formato: **Anúncio:** [Nome do produto...](...) ou Anúncio: Produto
+                product_match = re.search(r'An.ncio:[\s\*\*]*([^\n\r]+)', full_text, re.IGNORECASE)
                 
             product_name = product_match.group(1).strip() if product_match else "Produto GGMax"
             
@@ -555,7 +555,7 @@ def import_ggmax_discord_sync():
             
             # Cliente
             buyer_email = "Cliente GGMax"
-            client_match = re.search(r'Cliente:\*\*\s*([^\n\r]+)', full_text, re.IGNORECASE)
+            client_match = re.search(r'Cliente:[\s\*\*]*([^\n\r]+)', full_text, re.IGNORECASE)
             if client_match:
                 buyer_email = client_match.group(1).strip()
             
