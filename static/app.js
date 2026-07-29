@@ -117,16 +117,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Filtro por provedor de E-mail
-            if (providerOpt !== 'all' && sale.buyer_email) {
-                const email = sale.buyer_email.toLowerCase();
+            if (providerOpt !== 'all' && sale.account_details) {
+                // Remove espaços em branco do account_details para garantir que endsWith funcione
+                const details = sale.account_details.toLowerCase();
                 if (providerOpt === 'vlxsmfy') {
-                    if (!email.endsWith('@vlxsmfy.com')) return false;
+                    if (!details.includes('@vlxsmfy.com')) return false;
                 } else if (providerOpt === 'gmail') {
-                    if (!email.endsWith('@gmail.com') && !email.endsWith('@googlemail.com')) return false;
+                    if (!details.includes('@gmail.com') && !details.includes('@googlemail.com')) return false;
                 } else if (providerOpt === 'outlook') {
-                    if (!email.endsWith('@outlook.com') && !email.endsWith('@hotmail.com') && !email.endsWith('@live.com')) return false;
+                    if (!details.includes('@outlook.com') && !details.includes('@hotmail.com') && !details.includes('@live.com')) return false;
                 } else if (providerOpt === 'other') {
-                    if (email.endsWith('@vlxsmfy.com') || email.endsWith('@gmail.com') || email.endsWith('@googlemail.com') || email.endsWith('@outlook.com') || email.endsWith('@hotmail.com') || email.endsWith('@live.com')) return false;
+                    if (details.includes('@vlxsmfy.com') || details.includes('@gmail.com') || details.includes('@googlemail.com') || details.includes('@outlook.com') || details.includes('@hotmail.com') || details.includes('@live.com')) return false;
                 }
             }
 

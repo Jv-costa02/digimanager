@@ -549,9 +549,6 @@ def import_ggmax_discord_sync():
             # Se sobrou algum colchete perdido do link, limpa
             product_name = product_name.replace('](', ' ').replace('[', '')
             
-            if is_shared_account(product_name):
-                skipped += 1
-                continue
             
             # Cliente
             buyer_email = "Cliente GGMax"
