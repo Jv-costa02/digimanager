@@ -118,16 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Filtro por provedor de E-mail
             if (providerOpt !== 'all' && sale.account_details) {
-                // Remove espaços em branco do account_details para garantir que endsWith funcione
                 const details = sale.account_details.toLowerCase();
-                if (providerOpt === 'vlxsmfy') {
-                    if (!details.includes('@vlxsmfy.com')) return false;
-                } else if (providerOpt === 'gmail') {
-                    if (!details.includes('@gmail.com') && !details.includes('@googlemail.com')) return false;
-                } else if (providerOpt === 'outlook') {
-                    if (!details.includes('@outlook.com') && !details.includes('@hotmail.com') && !details.includes('@live.com')) return false;
-                } else if (providerOpt === 'other') {
-                    if (details.includes('@vlxsmfy.com') || details.includes('@gmail.com') || details.includes('@googlemail.com') || details.includes('@outlook.com') || details.includes('@hotmail.com') || details.includes('@live.com')) return false;
+                // Extrai o primeiro e-mail válido encontrado no texto usando regex
+                const emailMatch = details.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/);
+                if (emailMatch) {
+                    const firstEmail = emailMatch[0];
+                    if (providerOpt === 'vlxsmfy') {
+                        if (!firstEmail.endsWith('@vlxsmfy.com')) return false;
+                    } else if (providerOpt === 'gmail') {
+                        if (!firstEmail.endsWith('@gmail.com') && !firstEmail.endsWith('@googlemail.com')) return false;
+                    } else if (providerOpt === 'outlook') {
+                        if (!firstEmail.endsWith('@outlook.com') && !firstEmail.endsWith('@hotmail.com') && !firstEmail.endsWith('@live.com')) return false;
+                    } else if (providerOpt === 'other') {
+                        if (firstEmail.endsWith('@vlxsmfy.com') || firstEmail.endsWith('@gmail.com') || firstEmail.endsWith('@googlemail.com') || firstEmail.endsWith('@outlook.com') || firstEmail.endsWith('@hotmail.com') || firstEmail.endsWith('@live.com')) return false;
+                    }
+                } else {
+                    // Se não encontrar nenhum e-mail claro, e o filtro não for 'other', esconde.
+                    if (providerOpt !== 'other') return false;
                 }
             }
 
